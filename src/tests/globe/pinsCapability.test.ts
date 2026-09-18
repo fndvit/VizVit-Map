@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { createPinsCapability } from '$lib/globe/capabilities/pinsCapability';
 import type { PinsConfig, ProjectedPin } from '$lib/globe/config';
-import { makeFakeContext } from '../helpers/fakeProvider';
+import { makeFakeContext } from '$lib/testing/fakeProvider';
 
 // The real projection helper is rAF-throttled: queue the frames the helper asks
 // for and run them on demand, so one `schedule()` really is one projection.

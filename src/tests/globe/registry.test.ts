@@ -1,8 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { defineRule, mapConfigToCapabilities, type CapabilityRule } from '$lib/globe/registry';
 import type { Capability } from '$lib/globe/capability';
-import type { GlobeConfig } from '$lib/globe/config';
+import type { GlobeConfig } from '$lib/globe/config.js';
 import { ProviderMismatchError, type ProviderKind } from '$lib/map-engine/provider';
+
+/**
+ * A host's extra capability, declared the way the library asks for one: the
+ * sub-config is merged onto `GlobeConfig` from outside. This is the extension
+ * point under test — the NatGeo app adds `dataLayers` exactly like this.
+ */
+declare module '$lib/globe/config.js' {
+	interface GlobeConfig {
+		dataLayers?: { kind: 'explore'; state: unknown; selection: string[] };
+	}
+}
 
 /** A no-op capability that just records its name (and optionally its provider). */
 const fakeCapability = (name: string, requires?: ProviderKind): Capability<unknown> => ({

@@ -46,7 +46,7 @@ export function releaseDecodeWorker(): void {
 
 function getWorker(): Worker {
 	if (worker) return worker;
-	worker = new Worker(new URL('./pmtilesDecode.worker.ts', import.meta.url), { type: 'module' });
+	worker = new Worker(new URL('./pmtilesDecode.worker.js', import.meta.url), { type: 'module' });
 	worker.onmessage = (e: MessageEvent) => {
 		const msg = e.data as { type: string; id: number; message?: string };
 		const p = pending.get(msg.id);

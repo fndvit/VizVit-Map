@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { SCALE_Z0, scaleForZoom, zoomForScale } from '$lib/map-engine/scale';
-import { defaultLodConfig } from '$lib/config/exploreLayerData';
 
 describe('scale ↔ zoom', () => {
 	it('puts zoom 0 at the equator at the reference scale', () => {
@@ -28,20 +27,5 @@ describe('scale ↔ zoom', () => {
 	it('clamps beyond the web-mercator limits instead of collapsing to zero', () => {
 		expect(scaleForZoom(3, 89)).toBe(scaleForZoom(3, 85));
 		expect(Number.isFinite(zoomForScale(1000, -90))).toBe(true);
-	});
-});
-
-describe('the explore LOD ladder survives the currency', () => {
-	it('round-trips every tier scale window a provider might derive from zoom', () => {
-		const windows = Object.values(defaultLodConfig).flatMap((tier) => [
-			tier.minScale,
-			tier.maxScale
-		]);
-		const bounded = windows.filter((s) => s > 0);
-		expect(bounded.length).toBeGreaterThan(0);
-		for (const scale of bounded) {
-			const back = scaleForZoom(zoomForScale(scale, 0), 0);
-			expect(Math.abs(back - scale) / scale).toBeLessThan(1e-9);
-		}
 	});
 });

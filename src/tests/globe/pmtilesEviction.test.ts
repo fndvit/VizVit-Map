@@ -79,7 +79,7 @@ vi.mock('$lib/map-engine/tiles/pmtilesDecodeClient', () => ({
 import { PmtilesLayerAdapter } from '$lib/map-engine/tiles/PmtilesLayerAdapter';
 import type { ScaleWindow } from '$lib/map-engine/tiles/PmtilesLayerAdapter';
 import { RecordingTileSink } from '../helpers/recordingTileSink';
-import { makeFakeProvider, type FakeProvider } from '../helpers/fakeProvider';
+import { makeFakeProvider, type FakeProvider } from '$lib/testing/fakeProvider';
 
 /** A lng/lat box the fake provider unprojects its sample grid into. */
 interface Box {

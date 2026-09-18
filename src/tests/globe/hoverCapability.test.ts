@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { createHoverCapability } from '$lib/globe/capabilities/hoverCapability';
 import type { HoverConfig } from '$lib/globe/config';
-import { makeFakeContext } from '../helpers/fakeProvider';
+import { makeFakeContext } from '$lib/testing/fakeProvider';
 
 describe('hoverCapability (cursor)', () => {
 	it('toggles the view cursor based on a point-layer hit', async () => {

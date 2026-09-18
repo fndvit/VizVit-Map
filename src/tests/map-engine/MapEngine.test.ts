@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { MapEngine } from '$lib/map-engine/MapEngine';
 import type { BasemapCatalog, BasemapSpec, MapProvider } from '$lib/map-engine';
-import { makeFakeProvider, type FakeProvider } from '../helpers/fakeProvider';
+import { makeFakeProvider, type FakeProvider } from '$lib/testing/fakeProvider';
 
 const container = {} as HTMLElement;
 

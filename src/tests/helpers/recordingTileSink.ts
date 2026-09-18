@@ -17,7 +17,7 @@
  * re-shown tile is visible as new ids on the same cells.
  */
 
-import type { TileCell, TileSink } from '$lib/map-engine/tiles/PmtilesLayerAdapter';
+import type { TileCell, TileSink } from '$lib/map-engine/tiles/PmtilesLayerAdapter.js';
 
 /** One recorded `add`/`remove` call, in the order the adapter made it. */
 export interface RecordedBatch {

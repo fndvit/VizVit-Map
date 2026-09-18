@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createOutlineCapability } from '$lib/globe/capabilities/outlineCapability';
 import type { OutlineConfig } from '$lib/globe/config';
-import { makeFakeContext, type FakeGeoJsonLayer, type FakeProvider } from '../helpers/fakeProvider';
+import {
+	makeFakeContext,
+	type FakeGeoJsonLayer,
+	type FakeProvider
+} from '$lib/testing/fakeProvider';
 
 const baseConfig = (over: Partial<OutlineConfig> = {}): OutlineConfig => ({
 	id: 'cerrado',

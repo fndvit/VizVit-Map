@@ -1,12 +1,12 @@
 /**
- * @module tests/helpers/fakeProvider
+ * @module testing/fakeProvider
  * The in-memory {@link MapProvider} — the second adapter that makes the provider
  * seam real. Capability tests drive it by firing events and inspecting the
  * layers it recorded; nothing here touches ArcGIS or MapLibre.
  */
 
 import { vi } from 'vitest';
-import type { MapEngine } from '$lib/map-engine';
+import type { MapEngine } from '$lib/map-engine/index.js';
 import {
 	ProviderMismatchError,
 	type CameraState,
@@ -24,8 +24,8 @@ import {
 	type ProviderEvents,
 	type ProviderKind,
 	type ScreenPoint
-} from '$lib/map-engine/provider';
-import type { GlobeContext } from '$lib/globe/capability';
+} from '$lib/map-engine/provider.js';
+import type { GlobeContext } from '$lib/globe/capability.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- test double */
 

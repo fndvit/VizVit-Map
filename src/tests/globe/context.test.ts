@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildGlobeContext } from '$lib/globe/context';
 import type { MapEngine } from '$lib/map-engine';
-import { makeFakeProvider } from '../helpers/fakeProvider';
+import { makeFakeProvider } from '$lib/testing/fakeProvider';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- the engine stub is a partial MapEngine */
 

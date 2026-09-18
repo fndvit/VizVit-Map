@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createMarkersCapability } from '$lib/globe/capabilities/markersCapability';
 import type { MarkersConfig } from '$lib/globe/config';
 import type { PointItem } from '$lib/map-engine/provider';
-import { makeFakeContext, type FakePointLayer, type FakeProvider } from '../helpers/fakeProvider';
+import { makeFakeContext, type FakePointLayer, type FakeProvider } from '$lib/testing/fakeProvider';
 
 const items = [
 	{ id: 'india', lon: 78, lat: 20 },
