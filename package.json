@@ -1,5 +1,5 @@
 {
-	"name": "@vit-foundation/vizvit-map",
+	"name": "@vit-foundation/map",
 	"version": "0.1.0",
 	"description": "A config-driven globe and map component, with a provider seam so the same features run on ArcGIS, MapLibre or a test double",
 	"license": "Apache-2.0",
@@ -40,10 +40,55 @@
 			"svelte": "./dist/globe/index.js",
 			"default": "./dist/globe/index.js"
 		},
+		"./Globe.svelte": {
+			"types": "./dist/globe/Globe.svelte.d.ts",
+			"svelte": "./dist/globe/Globe.svelte",
+			"default": "./dist/globe/Globe.svelte"
+		},
+		"./MapCanvas.svelte": {
+			"types": "./dist/globe/MapCanvas.svelte.d.ts",
+			"svelte": "./dist/globe/MapCanvas.svelte",
+			"default": "./dist/globe/MapCanvas.svelte"
+		},
+		"./config": {
+			"types": "./dist/globe/config.d.ts",
+			"svelte": "./dist/globe/config.js",
+			"default": "./dist/globe/config.js"
+		},
+		"./capability": {
+			"types": "./dist/globe/capability.d.ts",
+			"svelte": "./dist/globe/capability.js",
+			"default": "./dist/globe/capability.js"
+		},
+		"./registry": {
+			"types": "./dist/globe/registry.d.ts",
+			"svelte": "./dist/globe/registry.js",
+			"default": "./dist/globe/registry.js"
+		},
+		"./hover": {
+			"types": "./dist/globe/hover/hoverTypes.d.ts",
+			"svelte": "./dist/globe/hover/hoverTypes.js",
+			"default": "./dist/globe/hover/hoverTypes.js"
+		},
+		"./dot-style": {
+			"types": "./dist/globe/hover/dotStylePrimitives.d.ts",
+			"svelte": "./dist/globe/hover/dotStylePrimitives.js",
+			"default": "./dist/globe/hover/dotStylePrimitives.js"
+		},
 		"./engine": {
 			"types": "./dist/map-engine/index.d.ts",
 			"svelte": "./dist/map-engine/index.js",
 			"default": "./dist/map-engine/index.js"
+		},
+		"./provider": {
+			"types": "./dist/map-engine/provider.d.ts",
+			"svelte": "./dist/map-engine/provider.js",
+			"default": "./dist/map-engine/provider.js"
+		},
+		"./geocode": {
+			"types": "./dist/map-engine/geocode.d.ts",
+			"svelte": "./dist/map-engine/geocode.js",
+			"default": "./dist/map-engine/geocode.js"
 		},
 		"./arcgis": {
 			"types": "./dist/map-engine/arcgis/index.d.ts",
@@ -59,18 +104,27 @@
 			"types": "./dist/map-engine/tiles/PmtilesLayerAdapter.d.ts",
 			"svelte": "./dist/map-engine/tiles/PmtilesLayerAdapter.js",
 			"default": "./dist/map-engine/tiles/PmtilesLayerAdapter.js"
+		},
+		"./testing": {
+			"types": "./dist/testing/index.d.ts",
+			"svelte": "./dist/testing/index.js",
+			"default": "./dist/testing/index.js"
 		}
 	},
 	"peerDependencies": {
 		"@arcgis/core": "^5.0.0",
 		"maplibre-gl": "^5.0.0",
-		"svelte": "^5.0.0"
+		"svelte": "^5.0.0",
+		"vitest": "^4.0.0"
 	},
 	"peerDependenciesMeta": {
 		"@arcgis/core": {
 			"optional": true
 		},
 		"maplibre-gl": {
+			"optional": true
+		},
+		"vitest": {
 			"optional": true
 		}
 	},

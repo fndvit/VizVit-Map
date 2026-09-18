@@ -1,17 +1,17 @@
-# @vit-foundation/vizvit-map
+# @vit-foundation/map
 
 A map **engine** with a provider seam: one live view behind five small ports, so
 the features you build on it run on ArcGIS, on MapLibre GL, or on an in-memory
 double in tests — without being rewritten for each.
 
-> Extracted from the National Geographic _Food for Tomorrow_ globe. This first
-> cut ships the engine; the `<Globe>` component and its capability system follow
-> once their remaining app-specific wires are cut.
+> Extracted from the National Geographic _Food for Tomorrow_ globe, which now
+> consumes this package rather than its own copy. It ships the engine, the
+> config-driven `<Globe>` component and its capability system.
 
 ## Install
 
 ```sh
-npm install @vit-foundation/vizvit-map
+npm install @vit-foundation/map
 ```
 
 `svelte` ^5 is a peer. The two map SDKs are **optional** peers — install only
@@ -25,7 +25,7 @@ npm install maplibre-gl      # for the MapLibre provider
 ## The idea
 
 ```ts
-import { MapEngine, type MapProvider } from '@vit-foundation/vizvit-map';
+import { MapEngine, type MapProvider } from '@vit-foundation/map/engine';
 
 const engine = new MapEngine({
 	mode: '3d',
@@ -94,12 +94,27 @@ const { view, map, loadModules } = provider.native('arcgis');
 
 ## Entry points
 
-| Import                                | Contents                                                          |
-| ------------------------------------- | ----------------------------------------------------------------- |
-| `@vit-foundation/vizvit-map`          | `MapEngine`, the `MapProvider` contract, scale helpers, geocoding |
-| `@vit-foundation/vizvit-map/arcgis`   | the ArcGIS adapter                                                |
-| `@vit-foundation/vizvit-map/maplibre` | the MapLibre adapter                                              |
-| `@vit-foundation/vizvit-map/tiles`    | the PMTiles streaming adapter and its `TileSink` seam             |
+The root entry point is the globe library; the engine and the adapters sit on
+their own subpaths, so a leaf component can import the one module it needs
+without pulling a whole barrel's dependency graph into its bundle.
+
+| Import                                 | Contents                                                                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@vit-foundation/map`                  | `<Globe>`, `<MapCanvas>`, the capability contract and registry, the neutral capabilities (markers, hover, pins, outlines), the hover overlay types, pin projection |
+| `@vit-foundation/map/Globe.svelte`     | `<Globe>` alone — the component, for a lazy `import()` or a leaf that wants no barrel                                                                              |
+| `@vit-foundation/map/MapCanvas.svelte` | `<MapCanvas>` alone — one view's lifecycle without the capability layer                                                                                            |
+| `@vit-foundation/map/config`           | `GlobeConfig` and its sub-configs. **The `declare module` target** a host augments to add its own capability's sub-config                                          |
+| `@vit-foundation/map/capability`       | the `Capability` / `GlobeContext` contract and `defineRule`                                                                                                        |
+| `@vit-foundation/map/registry`         | `mapConfigToCapabilities`, `DEFAULT_CAPABILITY_RULES`                                                                                                              |
+| `@vit-foundation/map/hover`            | the hover/tooltip types. **The `declare module` target** for a host's `TooltipMeaning`                                                                             |
+| `@vit-foundation/map/dot-style`        | `DotStyle` and the curve primitives dot renderers share                                                                                                            |
+| `@vit-foundation/map/engine`           | `MapEngine`, the `MapProvider` contract, scale helpers, geocoding                                                                                                  |
+| `@vit-foundation/map/provider`         | the provider contract alone — the types a capability programs against                                                                                              |
+| `@vit-foundation/map/geocode`          | place search, view-independent (no engine, no SDK until it is called)                                                                                              |
+| `@vit-foundation/map/arcgis`           | the ArcGIS adapter                                                                                                                                                 |
+| `@vit-foundation/map/maplibre`         | the MapLibre adapter                                                                                                                                               |
+| `@vit-foundation/map/tiles`            | the PMTiles streaming adapter and its `TileSink` seam                                                                                                              |
+| `@vit-foundation/map/testing`          | the in-memory fake provider, for a host's own capability tests (needs vitest)                                                                                      |
 
 ## License
 

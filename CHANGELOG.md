@@ -18,13 +18,23 @@ before any setup runs, rather than rendering an empty map.
 
 ### What is in the box
 
-| Entry point  | Contents                                                                                                                                                             |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.`          | `<Globe>`, `<MapCanvas>`, the capability contract and registry, the neutral capabilities (markers, hover, pins, outlines), the hover tooltip overlay, pin projection |
-| `./engine`   | `MapEngine`, the `MapProvider` contract, scale conversion, geocoding                                                                                                 |
-| `./arcgis`   | the ArcGIS adapter                                                                                                                                                   |
-| `./maplibre` | the MapLibre adapter                                                                                                                                                 |
-| `./tiles`    | the PMTiles streaming adapter and its `TileSink` seam                                                                                                                |
+| Entry point          | Contents                                                                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.`                  | `<Globe>`, `<MapCanvas>`, the capability contract and registry, the neutral capabilities (markers, hover, pins, outlines), the hover tooltip overlay, pin projection |
+| `./Globe.svelte`     | `<Globe>` alone, for a lazy `import()` or a leaf that wants no barrel                                                                                                |
+| `./MapCanvas.svelte` | `<MapCanvas>` alone                                                                                                                                                  |
+| `./config`           | `GlobeConfig` and its sub-configs — the `declare module` target for a host's own capability sub-config                                                               |
+| `./capability`       | the `Capability` / `GlobeContext` contract and `defineRule`                                                                                                          |
+| `./registry`         | `mapConfigToCapabilities`, `DEFAULT_CAPABILITY_RULES`                                                                                                                |
+| `./hover`            | the hover/tooltip types — the `declare module` target for a host's `TooltipMeaning`                                                                                  |
+| `./dot-style`        | `DotStyle` and the curve primitives dot renderers share                                                                                                              |
+| `./engine`           | `MapEngine`, the `MapProvider` contract, scale conversion, geocoding                                                                                                 |
+| `./provider`         | the provider contract alone — the types a capability programs against                                                                                                |
+| `./geocode`          | place search, view-independent                                                                                                                                       |
+| `./arcgis`           | the ArcGIS adapter                                                                                                                                                   |
+| `./maplibre`         | the MapLibre adapter                                                                                                                                                 |
+| `./tiles`            | the PMTiles streaming adapter and its `TileSink` seam                                                                                                                |
+| `./testing`          | the in-memory fake provider, for a host's own capability tests (vitest is an optional peer)                                                                          |
 
 `@arcgis/core` and `maplibre-gl` are **optional** peers — install only the
 provider you use.

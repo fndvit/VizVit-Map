@@ -21,7 +21,13 @@ export default defineConfig(
 		languageOptions: { globals: { ...globals.browser, ...globals.node } },
 		rules: {
 			// typescript-eslint advises against no-undef on TS projects.
-			'no-undef': 'off'
+			'no-undef': 'off',
+			// `_name` is the conventional mark for a binding that exists only to
+			// document a signature (a mocked `fetch(_url)`, a discarded catch).
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }
+			]
 		}
 	},
 	{
