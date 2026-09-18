@@ -1,0 +1,155 @@
+/**
+ * Hover tooltip overlay animations — the dot mirror, pulse ring, leaving-dot
+ * trail, tooltip enter/leave, cursor override, and the tooltip skeleton shimmer.
+ *
+ * Imported by HoverTooltipOverlay.svelte (a plain-CSS import is injected globally
+ * and unscoped by Vite), so every host that mounts the overlay gets these classes
+ * without pulling in the full ArcGIS theme (which lives in arcgisStyles.css).
+ */
+
+/* Tooltip skeleton shimmer — pulsing placeholder lines shown by
+   BaseTooltip for 150ms on every new cell hover. */
+@keyframes tooltip-shimmer {
+	0% {
+		opacity: 0.3;
+	}
+	50% {
+		opacity: 0.6;
+	}
+	100% {
+		opacity: 0.3;
+	}
+}
+
+.tooltip-shimmer-line {
+	animation: tooltip-shimmer 400ms ease-in-out infinite;
+	background: currentColor;
+	opacity: 0.15;
+	border-radius: 2px;
+}
+
+/* Hex-zone hover: animated dot that scales up over the data dot.
+   Width/height/background/border are set inline to match the real dot. */
+@keyframes hex-dot-grow {
+	0% {
+		transform: translate(-50%, -50%) scale(1);
+		filter: brightness(1);
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(1.5);
+		filter: brightness(1.25);
+	}
+}
+
+.hex-hover-dot {
+	border-radius: 50%;
+	box-sizing: border-box;
+	box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
+	animation: hex-dot-grow 225ms ease-out forwards;
+}
+
+/* Reverse animation — smoothly shrinks to original dot size then vanishes. */
+@keyframes hex-dot-shrink {
+	0% {
+		transform: translate(-50%, -50%) scale(1.5);
+		filter: brightness(1.25);
+		opacity: 1;
+	}
+	70% {
+		transform: translate(-50%, -50%) scale(1);
+		filter: brightness(1);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(1);
+		filter: brightness(1);
+		opacity: 0;
+	}
+}
+
+/* Pinned dot — pop/bounce on click, then stays at scaled-up size. */
+@keyframes hex-dot-pop {
+	0% {
+		transform: translate(-50%, -50%) scale(1.5);
+		filter: brightness(1.25);
+		box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(1.75);
+		filter: brightness(1.4);
+		box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.4);
+	}
+}
+
+.hex-hover-dot-pinned {
+	border-radius: 50%;
+	box-sizing: border-box;
+	animation: hex-dot-pop 175ms ease-out forwards;
+}
+
+.hex-hover-dot-leave {
+	border-radius: 50%;
+	box-sizing: border-box;
+	box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
+	animation: hex-dot-shrink 250ms ease-in-out forwards;
+}
+
+/* Expanding pulse ring around the hovered dot.
+   Border-color and background are set inline to match the dot's color. */
+@keyframes hex-hover-pulse {
+	0% {
+		transform: translate(-50%, -50%) scale(0.8);
+		opacity: 0.7;
+	}
+	40% {
+		opacity: 0.15;
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(3);
+		opacity: 0;
+	}
+}
+
+.hex-hover-ring {
+	border-radius: 50%;
+	border: 2px solid currentColor;
+	animation: hex-hover-pulse 0.6s ease-out forwards;
+}
+
+/* Tooltip entrance — fade in + subtle upward slide. */
+@keyframes hex-tooltip-in {
+	0% {
+		opacity: 0;
+		translate: 12px 16px;
+	}
+	100% {
+		opacity: 1;
+		translate: 12px 12px;
+	}
+}
+
+.hex-tooltip-enter {
+	animation: hex-tooltip-in 100ms ease-out forwards;
+}
+
+/* Tooltip exit — fade out + subtle downward slide. */
+@keyframes hex-tooltip-out {
+	0% {
+		opacity: 1;
+		translate: 12px 12px;
+	}
+	100% {
+		opacity: 0;
+		translate: 12px 16px;
+	}
+}
+
+.hex-tooltip-leave {
+	animation: hex-tooltip-out 100ms ease-in forwards;
+}
+
+/* Cursor override — ArcGIS sets cursor on .esri-view-surface which
+   overrides the parent. This targets it with !important when active. */
+.hex-cursor-pointer .esri-view-surface {
+	cursor: pointer !important;
+}
