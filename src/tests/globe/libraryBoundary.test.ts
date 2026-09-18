@@ -83,6 +83,39 @@ describe('the map library is packageable', () => {
 		expect(offenders).toEqual([]);
 	});
 
+	it("hardcodes no consumer's column names", () => {
+		// The published adapter used to read `attributes['h3id']` directly — this
+		// project's pipeline convention, and not a stable one even there (the same
+		// project's Schneider sources name the column `id`). A consumer whose
+		// tiles name it anything else got a silently empty hover index. Column
+		// names are the consumer's vocabulary, so they arrive as options.
+		const offenders: string[] = [];
+		for (const file of files) {
+			const source = readFileSync(file, 'utf8');
+			for (const [, literal] of source.matchAll(/attributes\??\.?\[['"]([^'"]+)['"]\]/g)) {
+				offenders.push(`${file} reads attributes['${literal}']`);
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
+	it('names no NatGeo domain vocabulary in executable code', () => {
+		// Doc comments may cite the consumer that drove a design; code may not
+		// know it exists.
+		const DOMAIN = /\b(natgeo|cropgrids|schneider|glcfcs|koppen|pepsico)\b/i;
+		const offenders: string[] = [];
+		for (const file of files) {
+			const code = readFileSync(file, 'utf8')
+				// Svelte `<!-- @component -->` blocks are documentation too.
+				.replace(/<!--[\s\S]*?-->/g, '')
+				.replace(/\/\*[\s\S]*?\*\//g, '')
+				.replace(/\/\/.*$/gm, '');
+			const hit = code.match(DOMAIN);
+			if (hit) offenders.push(`${file} names ${hit[0]}`);
+		}
+		expect(offenders).toEqual([]);
+	});
+
 	it('names a decode worker that survives `svelte-package`', () => {
 		// `svelte-package` copies this string through verbatim while transpiling
 		// the worker itself, so the name has to be the one `dist` ends up with —
