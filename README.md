@@ -116,6 +116,20 @@ without pulling a whole barrel's dependency graph into its bundle.
 | `@vit-foundation/map/tiles`            | the PMTiles streaming adapter and its `TileSink` seam                                                                                                              |
 | `@vit-foundation/map/testing`          | the in-memory fake provider, for a host's own capability tests (needs vitest)                                                                                      |
 
+## Documentation
+
+The full site lives in [`docs/`](./docs/index.md) and is served by
+`pnpm dev:docs`:
+
+- **[Getting started](./docs/getting-started.md)** — install, peers, a map on screen
+- **[Providers](./docs/providers.md)** — the seam, the three adapters, writing a fourth
+- **[Capabilities](./docs/capabilities.md)** — adding a feature of your own
+- **[Reference](./docs/reference.md)** — every entry point and what it exports
+- **[Changelog](./docs/changelog/index.md)** — one page per version, newest first
+
+[CONTRIBUTING](./CONTRIBUTING.md) has the setup, the rules the tooling enforces,
+and the release ritual.
+
 ## License
 
 Apache-2.0

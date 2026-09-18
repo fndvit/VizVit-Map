@@ -26,3 +26,7 @@ vite.config.ts.timestamp-*
 test-results
 *storybook.log
 storybook-static
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
