@@ -53,6 +53,17 @@ _presence_ of its sub-config, never by a flag.
 Swap `provider: 'maplibre'` for `'arcgis'` and nothing else in that file
 changes. That is the seam doing its job.
 
+`camera` does double duty: it is the camera the view is **built** with, and the
+target it **flies to** when the value changes. Leave it out and you get
+`NEUTRAL_SCENE_CAMERA` — whole earth, straight down, north up — because the
+engine never reaches into your app's config for a house default. Moving the
+camera is then a matter of changing those numbers; a scrolly step is exactly
+that, one config per step.
+
+Rebuilding the config object does not move the camera. The comparison is by
+value, so a `$derived` config that recomputes on an unrelated change — a
+basemap swap, a palette edit — leaves the view where the user put it.
+
 ## Driving the map yourself
 
 `<Globe>` hands you the live provider once the view is ready:
