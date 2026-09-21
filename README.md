@@ -4,9 +4,8 @@ A map **engine** with a provider seam: one live view behind five small ports, so
 the features you build on it run on ArcGIS, on MapLibre GL, or on an in-memory
 double in tests — without being rewritten for each.
 
-> Extracted from the National Geographic _Food for Tomorrow_ globe, which now
-> consumes this package rather than its own copy. It ships the engine, the
-> config-driven `<Globe>` component and its capability system.
+> It ships the engine, the config-driven `<Globe>` component
+> and its capability system.
 
 ## Install
 
