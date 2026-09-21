@@ -150,6 +150,20 @@ export interface PmtilesLayerOptions {
 	 * can hold (which otherwise crashes/reloads the tab).
 	 */
 	maxTiles?: number;
+	/**
+	 * Tile attribute holding each cell's H3 id, used to build the synchronous
+	 * hover index ({@link PmtilesLayerAdapter.queryAttributesByH3}).
+	 *
+	 * Defaults to `'h3id'`, which is the convention of the pipeline this adapter
+	 * was extracted from — and not a stable one even there: the same project's
+	 * Schneider sources name the column `id`. A dataset that names it anything
+	 * else gets a silently empty index and a hover that never resolves, so the
+	 * name is a parameter rather than a constant.
+	 *
+	 * Set to `null` to skip the index entirely when the consumer does not hover
+	 * by cell id.
+	 */
+	idField?: string | null;
 }
 
 /**
@@ -196,6 +210,30 @@ export interface TileCell {
  * `src/tests/helpers/recordingTileSink.ts`, which captures the add/remove/clear
  * batches so tile residency and eviction can be asserted without a map view.
  */
+/** A resolved cell — attributes plus the centroid a mirror dot sits on. */
+export type H3IndexHit = {
+	attributes: Record<string, unknown>;
+	lat: number;
+	lng: number;
+};
+
+/**
+ * A synchronous cell → attributes lookup, so a hover resolver can answer
+ * in-frame instead of awaiting a query.
+ *
+ * {@link PmtilesLayerAdapter} implements it over its streamed tile cells. It is
+ * declared **here**, beside that implementation, because it was previously
+ * declared by the consuming app: the published adapter satisfied a
+ * host-owned contract structurally, by luck, with nothing on either side to
+ * notice if one of them moved.
+ */
+export interface H3AttributeIndex {
+	/** The cell's attributes + centroid, or `null` when the cell isn't indexed. */
+	queryAttributesByH3(h3id: string): H3IndexHit | null;
+	/** True while the index is still building — resolvers fall back to an async query. */
+	isLoading?(): boolean;
+}
+
 export interface TileSink {
 	/** Adds a decoded tile's cells to the layer. */
 	add(cells: TileCell[]): void;
@@ -205,7 +243,7 @@ export interface TileSink {
 	clear(): void;
 }
 
-export class PmtilesLayerAdapter {
+export class PmtilesLayerAdapter implements H3AttributeIndex {
 	/** Local PMTiles archive — `null` when {@link decodeInWorker} (the worker owns it). */
 	private pmtiles: PMTiles | null = null;
 	private url: string;
@@ -228,7 +266,9 @@ export class PmtilesLayerAdapter {
 	 * sink can key its own per-feature bookkeeping off them.
 	 */
 	private tileCells = new Map<string, TileCell[]>();
-	/** h3id → feature attributes + centroid, for hex hover lookup. */
+	/** The tile attribute the hover index is keyed by; `null` disables the index. */
+	private readonly idField: string | null;
+	/** cell id → feature attributes + centroid, for hex hover lookup. */
 	private h3Index = new Map<
 		string,
 		{ attributes: Record<string, unknown>; lat: number; lng: number; tile: string }
@@ -291,6 +331,7 @@ export class PmtilesLayerAdapter {
 			(source as unknown as { chromeWindowsNoCache: boolean }).chromeWindowsNoCache = true;
 			this.pmtiles = new PMTiles(source);
 		}
+		this.idField = options.idField === undefined ? 'h3id' : options.idField;
 		this.sink = options.sink;
 		this.provider = options.provider;
 		this.layerName = options.layerName;
@@ -352,7 +393,8 @@ export class PmtilesLayerAdapter {
 	 * backs the hex hover lookup for PMTiles tiers (a streamed sink offers no
 	 * `queryFeatures`).
 	 *
-	 * @param h3id - H3 cell id (matches the `h3id` tile attribute)
+	 * @param h3id - Cell id, as the `idField` tile attribute carries it
+	 *   (default `'h3id'`).
 	 */
 	queryAttributesByH3(
 		h3id: string
@@ -656,7 +698,7 @@ export class PmtilesLayerAdapter {
 			const attributes = props[i];
 			cells.push({ lng, lat, attributes });
 
-			const h3id = attributes['h3id'];
+			const h3id = this.idField === null ? undefined : attributes[this.idField];
 			if (typeof h3id === 'string') {
 				this.h3Index.set(h3id, { attributes, lat, lng, tile: key });
 			}
@@ -711,7 +753,7 @@ export class PmtilesLayerAdapter {
 				this.debug.cellsCount -= cells.length;
 			}
 			for (const cell of cells) {
-				const h3id = cell.attributes?.['h3id'];
+				const h3id = this.idField === null ? undefined : cell.attributes?.[this.idField];
 				if (typeof h3id === 'string' && this.h3Index.get(h3id)?.tile === key) {
 					this.h3Index.delete(h3id);
 				}

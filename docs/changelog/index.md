@@ -5,10 +5,11 @@ version**, newest first. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-| Version                       | Released | What it is                                                         |
-| ----------------------------- | -------- | ------------------------------------------------------------------ |
-| [Unreleased](./unreleased.md) | —        | On `main`, not yet in a tagged version                             |
-| [0.1.0](./0.1.0.md)           | —        | The first extraction: the provider seam, three adapters, `<Globe>` |
+| Version                       | Released   | What it is                                                         |
+| ----------------------------- | ---------- | ------------------------------------------------------------------ |
+| [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                             |
+| [0.2.0](./0.2.0.md)           | 2026-09-21 | The PMTiles cell id column becomes yours to name                   |
+| [0.1.0](./0.1.0.md)           | 2026-09-18 | The first extraction: the provider seam, three adapters, `<Globe>` |
 
 Version numbers here describe a **package somebody installs**, so they describe
 the API rather than a deployment: MAJOR when an existing import, type or

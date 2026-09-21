@@ -87,9 +87,24 @@ Reach for them to construct a provider yourself, or for `toRgba` /
 
 ### `…/tiles`
 
-`PmtilesLayerAdapter`, `TileSink`, `TileCell`, `tileOwnsPoint`, `ScaleWindow`.
-Streams a PMTiles archive into whatever sink you give it; the adapter itself is
-provider-neutral.
+`PmtilesLayerAdapter`, `TileSink`, `TileCell`, `tileOwnsPoint`, `ScaleWindow`,
+`H3AttributeIndex`, `H3IndexHit`. Streams a PMTiles archive into whatever sink
+you give it; the adapter itself is provider-neutral.
+
+`PmtilesLayerAdapter implements H3AttributeIndex` — the synchronous cell →
+attributes lookup a hover resolver answers in-frame from, rather than awaiting
+a query. **The column it keys that index by is yours to name:** `idField`
+defaults to `'h3id'` and takes any attribute name, or `null` to skip the index
+when you do not hover by cell id.
+
+```ts
+import { PmtilesLayerAdapter, type H3AttributeIndex } from '@vit-foundation/map/tiles';
+
+const tiles = new PmtilesLayerAdapter({ url, sink, provider, layerName, idField: 'id' });
+
+const index: H3AttributeIndex = tiles;
+const hit = index.queryAttributesByH3(cellId); // attributes + centroid, or null
+```
 
 ### `…/testing`
 

@@ -1,6 +1,6 @@
 {
 	"name": "@vit-foundation/map",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "A config-driven globe and map component, with a provider seam so the same features run on ArcGIS, MapLibre or a test double",
 	"license": "Apache-2.0",
 	"type": "module",
