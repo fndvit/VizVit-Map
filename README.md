@@ -112,7 +112,7 @@ without pulling a whole barrel's dependency graph into its bundle.
 | `@vit-foundation/map/geocode`          | place search, view-independent (no engine, no SDK until it is called)                                                                                              |
 | `@vit-foundation/map/arcgis`           | the ArcGIS adapter                                                                                                                                                 |
 | `@vit-foundation/map/maplibre`         | the MapLibre adapter                                                                                                                                               |
-| `@vit-foundation/map/tiles`            | the PMTiles streaming adapter and its `TileSink` seam                                                                                                              |
+| `@vit-foundation/map/tiles`            | the PMTiles streaming adapter, its `TileSink` seam and the `H3AttributeIndex` hover lookup                                                                         |
 | `@vit-foundation/map/testing`          | the in-memory fake provider, for a host's own capability tests (needs vitest)                                                                                      |
 
 ## Documentation

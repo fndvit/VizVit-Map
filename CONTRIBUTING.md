@@ -21,7 +21,7 @@ pnpm dev:docs     # the documentation site
 
 ## Architectural rules the tooling enforces
 
-`src/tests/globe/libraryBoundary.test.ts` fails the build on three things, each
+`src/tests/globe/libraryBoundary.test.ts` fails the build on five things, each
 because it has bitten this package before:
 
 1. **The map engine never imports the globe layer.** The dependency runs one
@@ -35,6 +35,14 @@ because it has bitten this package before:
 3. **The PMTiles worker URL ends `.js`.** `new URL('./pmtilesDecode.worker.js',
 import.meta.url)` resolves in `dist`, and Vite maps it back to the `.ts`
    source when the package runs from source. Nothing type-checks that string.
+4. **No source reads a literal `attributes['…']` column name.** A column name
+   is the consumer's vocabulary, not the library's, so it arrives as an option.
+   The published PMTiles adapter read `attributes['h3id']` and handed every
+   other dataset a silently empty hover index.
+5. **No executable code names a consumer's domain vocabulary.** Doc comments
+   still may — recording which consumer drove a design is worth keeping. Code
+   that knows a consumer exists is the thing that stops the next one from
+   using it.
 
 ## Writing doc comments
 
