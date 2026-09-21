@@ -8,25 +8,4 @@ What is on `main` and not yet in a tagged version. When it ships, this page is
 renamed to its version and a new, empty one takes its place — see
 [all releases](./index.md).
 
-[Compare against `main` on GitHub](https://github.com/fndvit/VizVit-Map/compare/main...main)
-
-## Added
-
-- **`idField` on `PmtilesLayerAdapter`** — the tile attribute the hover index is
-  keyed by. Defaults to `'h3id'`, so nothing changes for a dataset that already
-  used that name; pass your own column name, or `null` to skip building the
-  index when you do not hover by cell id.
-- **`H3AttributeIndex` and `H3IndexHit`, exported from
-  `@vit-foundation/map/tiles`.** The synchronous cell → attributes lookup a
-  hover resolver answers in-frame from, declared beside the adapter that
-  implements it. If you declared this shape yourself to type the adapter,
-  delete your copy and import it.
-
-## Fixed
-
-- **The PMTiles hover index no longer hardcodes a column name.** It read
-  `attributes['h3id']` — the convention of one pipeline, and not a stable one
-  even there. Any archive naming the column anything else built a silently
-  empty index and a hover that never resolved. **Upgrading:** if you worked
-  around this by renaming the column in your tiles, you can stop; pass
-  `idField` instead.
+[Compare against `main` on GitHub](https://github.com/fndvit/VizVit-Map/compare/v0.2.0...main)
