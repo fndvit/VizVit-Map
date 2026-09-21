@@ -170,8 +170,19 @@
 	});
 
 	// ── Reactive camera move (3D) ───────────────────────────────────────
+	// Skip no-op moves, like the two effects above. `camera` is read through the
+	// host's `GlobeConfig`, so this effect re-runs whenever ANY part of that
+	// config churns — a basemap swap, a palette edit, a capability toggle. A
+	// host that pins a start camera (a module constant, so the value never
+	// changes) would otherwise be flown back to it on every unrelated change,
+	// yanking the view out from under the user. Compare by value, not identity:
+	// a host may rebuild the object while meaning the same camera.
+	let prevCameraKey = '';
 	$effect(() => {
 		if (!ready || !engine || !camera) return;
+		const key = `${camera.longitude}|${camera.latitude}|${camera.z}|${camera.tilt}|${camera.heading}`;
+		if (key === prevCameraKey) return;
+		prevCameraKey = key;
 		engine.flyTo(camera, flyToOptions);
 	});
 
