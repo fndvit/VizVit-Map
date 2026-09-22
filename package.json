@@ -20,7 +20,7 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"_comment:prepublishOnly": "Publishing is MANUAL. This is the only gate — it runs before prepack, so a package that fails lint, type-check or tests cannot reach the registry.",
+		"_comment:prepublishOnly": "Publishing is MANUAL. This is the only gate \u2014 it runs before prepack, so a package that fails lint, type-check or tests cannot reach the registry.",
 		"prepublishOnly": "npm run lint && npm run check && npm run test",
 		"dev:docs": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
@@ -145,6 +145,7 @@
 	],
 	"dependencies": {
 		"@mapbox/vector-tile": "^2.0.4",
+		"@vit-foundation/ui": "^0.31.0",
 		"pbf": "^4.0.1",
 		"pmtiles": "^4.4.0"
 	},
