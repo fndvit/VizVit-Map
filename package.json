@@ -1,6 +1,6 @@
 {
 	"name": "@vit-foundation/map",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "A config-driven globe and map component, with a provider seam so the same features run on ArcGIS, MapLibre or a test double",
 	"license": "Apache-2.0",
 	"type": "module",
@@ -20,7 +20,7 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"_comment:prepublishOnly": "Publishing is MANUAL. This is the only gate \u2014 it runs before prepack, so a package that fails lint, type-check or tests cannot reach the registry.",
+		"_comment:prepublishOnly": "Publishing is MANUAL. This is the only gate — it runs before prepack, so a package that fails lint, type-check or tests cannot reach the registry.",
 		"prepublishOnly": "npm run lint && npm run check && npm run test",
 		"dev:docs": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
