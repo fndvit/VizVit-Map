@@ -36,6 +36,7 @@
   @prop {number} [tooltipLeaveDuration] - Leaving-tooltip fade duration (ms). Default 200.
 -->
 <script lang="ts">
+	import { anchor } from '@vit-foundation/ui/overlay';
 	import { onDestroy, type Snippet } from 'svelte';
 	import type {
 		HoverInfo,
@@ -106,14 +107,32 @@
 	// Current tooltip card height — updated via bind:clientHeight; 300 is the fallback.
 	let tooltipElH = $state(300);
 
-	/** Computes CSS left/top for the tooltip so it stays within the container. */
+	/**
+	 * Computes CSS left/top for the tooltip so it stays within the container.
+	 *
+	 * The arithmetic is `anchor` from `@vit-foundation/ui/overlay`, not a local
+	 * copy: "place a card beside a point and keep it inside its container" was
+	 * implemented here and again in a chart, differently, and neither copy was
+	 * testable because both could only run inside a live layout. This overlay is
+	 * one of its two adapters; the sizes and paddings it passes are unchanged, so
+	 * the placement is identical to the version that lived here.
+	 *
+	 * @param dotX - The dot's x in container coordinates.
+	 * @param dotY - The dot's y in container coordinates.
+	 * @param h - The card's measured height, or the fallback before it is known.
+	 * @returns The `left` / `top` to position the card at, in px.
+	 */
 	function tooltipPos(dotX: number, dotY: number, h: number): { left: number; top: number } {
-		if (!containerW || !containerH) return { left: dotX, top: dotY };
-		let vLeft = dotX + 16;
-		let vTop = dotY - h / 2;
-		vLeft = Math.max(padX, Math.min(vLeft, containerW - tooltipWidth - padX));
-		vTop = Math.max(padTop, Math.min(vTop, containerH - h - padBottom));
-		return { left: vLeft, top: vTop };
+		return anchor(
+			{ x: dotX, y: dotY },
+			{ width: tooltipWidth, height: h },
+			{ width: containerW, height: containerH },
+			{
+				offset: { x: 16 },
+				align: 'center',
+				padding: { left: padX, right: padX, top: padTop, bottom: padBottom }
+			}
+		);
 	}
 
 	// Dots animating out (shrinking) — supports multiple simultaneous trails so
