@@ -63,6 +63,32 @@ _lowest_ zoom — the MapLibre adapter handles that conversion for you, but it i
 the kind of thing that silently inverts a layer's visibility if you do it by
 hand.
 
+### Tile schemes
+
+A zoom level only means something against a **tile scheme**, so both conversions
+take one as their second argument:
+
+```ts
+scaleForZoom(2, { tilePx: 512, snap: 0.5 });
+zoomForScale(view.scale, { latitude, tilePx: 512 });
+```
+
+- **`latitude`** — pass the view-centre latitude when the provider reports a
+  _ground_ scale, which a 3D globe does, so handoffs land at the same visual
+  density everywhere. A bare number is still read as this, so existing calls
+  mean what they always did.
+- **`tilePx`** — the tile size the levels were authored for. `256` is the
+  web-mercator default; Esri VectorTileServers publish **512 px** tiles, which
+  halves the scale at every level.
+- **`snap`** — how far past a level's own scale a renderer goes before it
+  switches. ArcGIS picks the _nearest_ LOD for a `VectorTileLayer`, so a style
+  zoom takes effect half a level late: `0.5`.
+
+Both are properties of the **service** you are reading, not of your map, which
+is why they are arguments rather than constants. Read a style's `minzoom` with
+the wrong scheme and every band lands a level out — content appears and vanishes
+one level early, which looks like a data problem and is not.
+
 ## Basemaps: your app owns the ids
 
 The engine knows no basemap ids. You give it a catalog:
