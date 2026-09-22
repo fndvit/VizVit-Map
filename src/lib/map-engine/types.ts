@@ -56,9 +56,10 @@ export interface BasemapOptions {
 	/** Land/ocean overrides for flat presets (ignored for standard/portal). */
 	customColors?: FlatColors;
 	/**
-	 * Whether to overlay the dynamic country/city label layer after the basemap
-	 * loads. Applies to `standard` and `portal` basemaps only — flat presets
-	 * have no labels by design. See `$lib/utils/mapLabels`.
+	 * Whether to ask the host's basemap catalog to decorate the basemap with a
+	 * label overlay after it loads (`BasemapCatalog.decorate`). A label stack with
+	 * its own lifecycle is better modelled as a host capability; see
+	 * `GlobeConfig.basemap.labelOverlay`.
 	 */
 	labelOverlay?: boolean;
 }

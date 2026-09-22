@@ -123,7 +123,16 @@ export interface BasemapConfig {
 	 * (scrolly) can still request an opaque ground. Default: a see-through surface.
 	 */
 	groundColor?: string;
-	/** Overlay dynamic country/city labels on standard/portal basemaps. */
+	/**
+	 * Ask the host's basemap catalog to decorate each applied basemap with a
+	 * label overlay (`BasemapCatalog.decorate`'s `labelOverlay` option).
+	 *
+	 * A label stack with its own lifecycle — layers to build, fonts to load,
+	 * sizes to re-bake on zoom — is better modelled as a host **capability**
+	 * (one sub-config, one rule; see `docs/capabilities.md`) than as a flag the
+	 * catalog re-applies on every basemap swap. This option stays for hosts whose
+	 * decoration really is a per-basemap tweak.
+	 */
 	labelOverlay?: boolean;
 }
 

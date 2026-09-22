@@ -156,6 +156,13 @@ return {
 The registry then refuses to mount it on another provider before any setup runs,
 which turns a silent empty map into a loud `ProviderMismatchError`.
 
+Take the constructors from `loadModules` rather than importing `@arcgis/core`
+yourself: the adapter de-dupes them, so two capabilities asking for
+`FeatureLayer` load it once. The adapter also ships the SDK-bound pieces that are
+still general — `createLabelStyleCompiler` and `addVectorTileOverlay` for label
+work — so reach for those before writing your own. See
+[Reference](./reference.md#arcgis-maplibre).
+
 ## What a capability cannot do
 
 It cannot render DOM — capabilities touch the view, not the page. A feature that

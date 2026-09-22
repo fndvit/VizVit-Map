@@ -56,7 +56,15 @@ export {
 } from './provider.js';
 
 // Scale is the LOD currency; zoom is derived.
-export { SCALE_Z0, scaleForZoom, zoomForScale } from './scale.js';
+export { SCALE_Z0, scaleForZoom, zoomForScale, type ZoomScaleOptions } from './scale.js';
+
+// Web font faces a map SDK rasterises label glyphs with.
+export {
+	loadFontFaces,
+	type FontFaceSpec,
+	type FontFaceStatus,
+	type FontFaceEnvironment
+} from './fonts.js';
 export { zoomForExtent } from './camera-fit.js';
 
 // Place search (view-independent: components can fetch suggestions without a map).

@@ -18,6 +18,7 @@ export const ARCGIS_LOADERS = {
 	CSVLayer: () => import('@arcgis/core/layers/CSVLayer'),
 	GeoJSONLayer: () => import('@arcgis/core/layers/GeoJSONLayer'),
 	FeatureLayer: () => import('@arcgis/core/layers/FeatureLayer'),
+	VectorTileLayer: () => import('@arcgis/core/layers/VectorTileLayer'),
 	Point: () => import('@arcgis/core/geometry/Point'),
 	SimpleRenderer: () => import('@arcgis/core/renderers/SimpleRenderer'),
 	UniqueValueRenderer: () => import('@arcgis/core/renderers/UniqueValueRenderer')

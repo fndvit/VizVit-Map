@@ -21,6 +21,9 @@ whole surface; import the narrow subpath in a component or a helper.
 | Test your capability              | `…/testing`                     |
 | Search for a place                | `…/geocode`                     |
 | Stream PMTiles                    | `…/tiles`                       |
+| Convert between zoom and scale    | `…/engine`                      |
+| Load web fonts for map labels     | `…/engine`                      |
+| Draw labels from a vector style   | `…/arcgis`                      |
 
 ## The entry points
 
@@ -64,8 +67,19 @@ the map's dot maths without wanting the hover graph.
 ### `…/engine`
 
 `MapEngine`, `HoverManager`, the whole `MapProvider` contract re-exported,
-`scaleForZoom` / `zoomForScale` / `SCALE_Z0`, `zoomForExtent`, and the geocoding
-functions.
+`scaleForZoom` / `zoomForScale` / `SCALE_Z0` and their `ZoomScaleOptions`,
+`zoomForExtent`, `loadFontFaces`, and the geocoding functions.
+
+`loadFontFaces(faces, env?)` puts web font faces into `document.fonts`, which is
+where a map SDK's canvas text rendering looks for them. An `@font-face` rule
+alone is lazy and nothing in the DOM asks for a label's family, so the faces
+have to be loaded explicitly or the first glyph atlas is built without them. It
+tries the `FontFace` API, falls back to a CSS rule, fetches each face once
+however many callers ask, and never rejects — the result says which faces loaded
+and which did not, so you can tell "fonts ready" from "styles ready" instead of
+conflating the two.
+
+The faces are yours: this knows no families and hosts nothing.
 
 ### `…/provider`
 
@@ -81,9 +95,64 @@ map and no SDK — a search box can use this on its own.
 
 ### `…/arcgis` · `…/maplibre`
 
-The adapters. You rarely import these: `MapEngine` loads the one you asked for.
-Reach for them to construct a provider yourself, or for `toRgba` /
-`ARCGIS_LOADERS` / `flatStyleFor`.
+The adapters. You rarely import these for the provider itself — `MapEngine`
+loads the one you asked for. Reach for them to construct a provider by hand, for
+`toRgba` / `ARCGIS_LOADERS` / `buildFlatStyle`, or, on the ArcGIS side, for the
+two helpers below.
+
+#### Labels from a vector tile style
+
+A vector tile style already says how every label class looks and at which zooms
+it shows. When those labels have to be drawn again as `FeatureLayer` labels —
+because a vector tile layer is draped on the ground in 3D and your data floats
+above it — that authored styling is the source of truth, and
+`createLabelStyleCompiler` reads it:
+
+```ts
+import { createLabelStyleCompiler } from '@vit-foundation/map/arcgis';
+
+const labels = createLabelStyleCompiler(styleJson, {
+	scheme: { tilePx: 512, snap: 0.5 }, // the service's tile scheme
+	defaults: { color: '#404040', haloColor: '#ffffff', haloWidth: 1 }
+});
+
+const style = labels.textStyleFor('countryLgT'); // fill, face, size, halo, casing, wrap
+const band = labels.zoomBandFor('countryLgT'); // { minZoom, maxZoom, minScale, maxScale }
+const ramp = labels.sizeRampFor('countryLgT'); // [{ zoom, size }, …] or null
+
+layer.minScale = band.minScale;
+layer.labelingInfo = [{ symbol: labels.textSymbol(style!, resolveFont) }];
+```
+
+Everything host-specific is injected: the tile scheme, the defaults for what a
+layer declares nothing for, which class wins when several share a source-layer,
+and a `LabelFontResolver` that turns the style's _face_ name into the CSS family
+you actually host plus the weight keyword ArcGIS accepts. The compiler knows no
+service, no palette and no font. `textSymbol` also does the px → point
+conversion (`pxToPoints`) that a style's sizes need and an ArcGIS `TextSymbol`
+expects; passing px straight through renders every label 4/3 too large.
+
+#### A vector tile style above the basemap
+
+`addVectorTileOverlay(native, spec)` draws a style as an operational layer, with
+an optional filter on which of its style layers show — which is how you draw
+"only the POI symbols" of a style whose publisher offers you the whole basemap:
+
+```ts
+const poi = await addVectorTileOverlay(ctx.provider.native('arcgis'), {
+	url: serviceUrl,
+	title: 'POI',
+	keep: (layer) => layer.id.startsWith('g_spriteGlyph/')
+});
+
+poi.raise(); // back to the top after something else was added
+poi.remove();
+```
+
+The filter is applied after the style loads and before the layer is added, so a
+filtered style never flashes complete. In 3D the layer is **draped** on the
+ground: it cannot render above content that floats above the surface, whatever
+its position in the layer list.
 
 ### `…/tiles`
 

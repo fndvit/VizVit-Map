@@ -28,6 +28,28 @@ export {
 	type BuiltView
 } from './viewFactory.js';
 export { applyBasemap, initialBasemap, needsDeferredApply, type BasemapCache } from './basemap.js';
+// Label styling primitives: a style document's symbol layers → ArcGIS TextSymbols.
+export {
+	createLabelStyleCompiler,
+	pxToPoints,
+	NEUTRAL_LABEL_DEFAULTS,
+	type LabelFont,
+	type LabelFontResolver,
+	type LabelSizeStop,
+	type LabelStyleCompiler,
+	type LabelStyleCompilerOptions,
+	type LabelStyleDefaults,
+	type LabelTextStyle,
+	type LabelZoomBand,
+	type StyleSymbolLayer
+} from './labelStyle.js';
+// A vector tile style drawn above the basemap, filtered to some of its layers.
+export {
+	addVectorTileOverlay,
+	type StyleLayerSummary,
+	type VectorTileOverlayHandle,
+	type VectorTileOverlaySpec
+} from './vectorTileOverlay.js';
 
 /**
  * The layer constructors the provider preloads. The contract's layer factory is

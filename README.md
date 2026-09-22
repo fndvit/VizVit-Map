@@ -73,7 +73,10 @@ crosses the seam in SDK shape.
 
 Ports speak scale (1:N at the view centre, `0` = unbounded). Providers that
 think in zoom convert through `scaleForZoom` / `zoomForScale`, so a tuned
-level-of-detail ladder survives a provider change unchanged.
+level-of-detail ladder survives a provider change unchanged. Those two take the
+**tile scheme** a zoom belongs to — tile size and LOD snap, both properties of
+the service you are reading — so a 512 px vector tile service's bands convert
+correctly instead of landing a level out.
 
 ### Basemaps: your app owns the ids
 
@@ -107,10 +110,10 @@ without pulling a whole barrel's dependency graph into its bundle.
 | `@vit-foundation/map/registry`         | `mapConfigToCapabilities`, `DEFAULT_CAPABILITY_RULES`                                                                                                              |
 | `@vit-foundation/map/hover`            | the hover/tooltip types. **The `declare module` target** for a host's `TooltipMeaning`                                                                             |
 | `@vit-foundation/map/dot-style`        | `DotStyle` and the curve primitives dot renderers share                                                                                                            |
-| `@vit-foundation/map/engine`           | `MapEngine`, the `MapProvider` contract, scale helpers, geocoding                                                                                                  |
+| `@vit-foundation/map/engine`           | `MapEngine`, the `MapProvider` contract, scale helpers, web font loading, geocoding                                                                                |
 | `@vit-foundation/map/provider`         | the provider contract alone — the types a capability programs against                                                                                              |
 | `@vit-foundation/map/geocode`          | place search, view-independent (no engine, no SDK until it is called)                                                                                              |
-| `@vit-foundation/map/arcgis`           | the ArcGIS adapter                                                                                                                                                 |
+| `@vit-foundation/map/arcgis`           | the ArcGIS adapter, plus the label style compiler and vector tile overlay an SDK-bound capability draws labels with                                                |
 | `@vit-foundation/map/maplibre`         | the MapLibre adapter                                                                                                                                               |
 | `@vit-foundation/map/tiles`            | the PMTiles streaming adapter, its `TileSink` seam and the `H3AttributeIndex` hover lookup                                                                         |
 | `@vit-foundation/map/testing`          | the in-memory fake provider, for a host's own capability tests (needs vitest)                                                                                      |
