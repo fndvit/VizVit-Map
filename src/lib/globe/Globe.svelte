@@ -74,6 +74,8 @@
 
 	// ── Tooltip overlay (presentation, driven by config.tooltip) ──────
 	let overlay = $state<HoverOverlayHandle | null>(null);
+	/** Whether the pointer rests on a data dot — drives the stage's cursor class. */
+	let cursorOverDot = $state(false);
 	let containerW = $state(0);
 	let containerH = $state(0);
 	let reprojectHandle: { remove(): void } | null = null;
@@ -163,9 +165,14 @@
 
 <div class={className}>
 	<!-- Globe stage: the positioned stacking context shared by the canvas, the
-	     tooltip overlay (z-[3..7]), and any host `children` overlays. -->
+	     tooltip overlay and any host `children` overlays. Its rungs are the
+	     `--vit-map-z-*` custom properties declared in the style block below (see
+	     hoverOverlay.css for the ladder); a host slots its own layers in with
+	     `z-index: var(--vit-map-z-host)`. The over-a-dot cursor is applied here
+	     too, so a host need not know the overlay's class names. -->
 	<div
-		class="relative isolate h-full w-full"
+		class="vit-map-stage"
+		class:hex-cursor-pointer={cursorOverDot}
 		bind:clientWidth={containerW}
 		bind:clientHeight={containerH}
 	>
@@ -190,7 +197,7 @@
 			{onclick}
 			{oncamerachange}
 			{onerror}
-			class="absolute inset-0 h-full w-full"
+			class="vit-map-canvas"
 			onready={handleReady}
 		/>
 
@@ -206,7 +213,10 @@
 				padBottom={config.tooltip.padding?.bottom ?? 0}
 				padX={config.tooltip.padding?.x ?? 20}
 				tooltipWidth={config.tooltip.cardWidth ?? 277}
-				onCursorChange={config.tooltip.onCursorChange}
+				onCursorChange={(over) => {
+					cursorOverDot = over;
+					config.tooltip?.onCursorChange?.(over);
+				}}
 				tooltipDelay={config.tooltip.timing?.tooltipDelay}
 				leaveDuration={config.tooltip.timing?.leaveDuration}
 				ringDuration={config.tooltip.timing?.ringDuration}
@@ -217,3 +227,28 @@
 		{@render children?.()}
 	</div>
 </div>
+
+<style>
+	/* The stage: positioned so overlays anchor to it, isolated so the z-ladder
+	   below cannot be captured by a host's own stacking, and the ladder itself.
+	   Scoped CSS ships with the component; nothing here depends on the
+	   consumer's CSS toolchain. */
+	.vit-map-stage {
+		position: relative;
+		isolation: isolate;
+		width: 100%;
+		height: 100%;
+		--vit-map-z-ring: 3;
+		--vit-map-z-dot: 4;
+		--vit-map-z-pinned: 5;
+		--vit-map-z-host: 6;
+		--vit-map-z-tooltip: 7;
+	}
+
+	/* The canvas fills the stage and paints first (no z-index): everything
+	   positioned after it in the DOM stacks above the map. */
+	.vit-map-stage :global(.vit-map-canvas) {
+		position: absolute;
+		inset: 0;
+	}
+</style>

@@ -53,6 +53,33 @@ while writing a feature.
 `mapConfigToCapabilities`, `DEFAULT_CAPABILITY_RULES`. Presence of a sub-config
 activates its capability; a `requires` mismatch throws before any setup runs.
 
+### Styling contract
+
+The package is **style-complete**: every component ships the CSS it needs, as
+scoped `<style>` blocks or as its own stylesheet (`hoverOverlay.css`, imported by
+the overlay). It contains **no Tailwind utility classes** — a consumer's CSS
+toolchain never scans `node_modules`, so a utility written here would exist only
+if the consumer happened to use the same class. `libraryBoundary.test.ts`
+enforces this; if a consumer needs a `@source` line to make the globe render, that
+is a bug here.
+
+Stacking inside the globe stage is a named ladder of custom properties,
+declared on the stage (`.vit-map-stage`) and read by the overlay:
+
+| property              | default | what sits there                            |
+| --------------------- | ------- | ------------------------------------------ |
+| `--vit-map-z-ring`    | 3       | the pulse ring                             |
+| `--vit-map-z-dot`     | 4       | the hover dot and its leaving trail        |
+| `--vit-map-z-pinned`  | 5       | the pinned (selected) dot                  |
+| `--vit-map-z-host`    | 6       | free rung for a host's `children` overlays |
+| `--vit-map-z-tooltip` | 7       | the tooltip card                           |
+
+A host places a gradient, a loader or a highlight with
+`z-index: var(--vit-map-z-host)` and never learns the numbers; to move a rung,
+redeclare the property on the globe's root element. The over-a-dot cursor is
+the globe's own too: it toggles the cursor on the map surface and reports the
+state through `tooltip.onCursorChange` for hosts that mirror it.
+
 ### `…/hover`
 
 `HoverResult`, `HoverInfo`, `DotStyle`, `TooltipRender`, `HoverOverlayHandle`,

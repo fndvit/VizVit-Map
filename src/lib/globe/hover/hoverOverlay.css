@@ -1,31 +1,63 @@
 /**
- * Hover tooltip overlay animations — the dot mirror, pulse ring, leaving-dot
- * trail, tooltip enter/leave, cursor override, and the tooltip skeleton shimmer.
+ * Hover tooltip overlay styles — placement and stacking of every overlay
+ * element, plus the animations: the dot mirror, pulse ring, leaving-dot trail,
+ * tooltip enter/leave and the cursor override. What goes INSIDE the card is the
+ * host's (its skeleton shimmer included): this file styles nothing of it.
  *
  * Imported by HoverTooltipOverlay.svelte (a plain-CSS import is injected globally
  * and unscoped by Vite), so every host that mounts the overlay gets these classes
  * without pulling in the full ArcGIS theme (which lives in arcgisStyles.css).
+ *
+ * STYLE-COMPLETE BY CONTRACT. This package ships no Tailwind utility classes:
+ * a consumer's CSS toolchain never sees `node_modules`, so a utility written in
+ * this markup is generated only if the consumer happens to use the same class
+ * itself — which is how the tooltip card once rendered UNDER the hover dot
+ * (`z-[7]` missing, card at `z-index: auto`). Position, pointer-events and
+ * z-index are therefore declared here, per class. `libraryBoundary.test.ts`
+ * forbids utility tokens in `src/lib`.
+ *
+ * THE Z-LADDER. Overlay elements stack by custom properties the globe stage
+ * (`Globe.svelte`, `.vit-map-stage`) defines and a host may read or override:
+ *
+ *   --vit-map-z-ring     3   pulse ring
+ *   --vit-map-z-dot      4   hover dot and leaving trail
+ *   --vit-map-z-pinned   5   pinned (selected) dot
+ *   --vit-map-z-host     6   free rung for a host's own overlays (gradients, loaders)
+ *   --vit-map-z-tooltip  7   the card
+ *
+ * A host places its `children` with `z-index: var(--vit-map-z-host)` instead
+ * of guessing a number between the package's rungs. The fallbacks below keep
+ * the order intact if an element is ever rendered outside the stage.
  */
 
-/* Tooltip skeleton shimmer — pulsing placeholder lines shown by
-   BaseTooltip for 150ms on every new cell hover. */
-@keyframes tooltip-shimmer {
-	0% {
-		opacity: 0.3;
-	}
-	50% {
-		opacity: 0.6;
-	}
-	100% {
-		opacity: 0.3;
-	}
+/* Shared placement: every overlay element is positioned by the overlay and
+   never intercepts the pointer — the map underneath keeps receiving it. */
+.hex-hover-dot,
+.hex-hover-dot-leave,
+.hex-hover-dot-pinned,
+.hex-hover-ring,
+.hex-tooltip-enter,
+.hex-tooltip-leave {
+	position: absolute;
+	pointer-events: none;
 }
 
-.tooltip-shimmer-line {
-	animation: tooltip-shimmer 400ms ease-in-out infinite;
-	background: currentColor;
-	opacity: 0.15;
-	border-radius: 2px;
+.hex-hover-ring {
+	z-index: var(--vit-map-z-ring, 3);
+}
+
+.hex-hover-dot,
+.hex-hover-dot-leave {
+	z-index: var(--vit-map-z-dot, 4);
+}
+
+.hex-hover-dot-pinned {
+	z-index: var(--vit-map-z-pinned, 5);
+}
+
+.hex-tooltip-enter,
+.hex-tooltip-leave {
+	z-index: var(--vit-map-z-tooltip, 7);
 }
 
 /* Hex-zone hover: animated dot that scales up over the data dot.

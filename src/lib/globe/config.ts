@@ -235,7 +235,10 @@ export interface TooltipConfig {
 		ringDuration?: number;
 		tooltipLeaveDuration?: number;
 	};
-	/** Over-a-dot cursor-state change (host toggles its cursor class). */
+	/**
+	 * Over-a-dot cursor-state change. The globe already switches the map's
+	 * cursor itself; this is for a host that wants to mirror the state elsewhere.
+	 */
 	onCursorChange?: (cursor: boolean) => void;
 	/** Pointer-leave companion (host cache clear). Runs AFTER the overlay's onHover(null). */
 	onLeave?: () => void;
