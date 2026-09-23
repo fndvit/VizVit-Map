@@ -82,9 +82,20 @@ state through `tooltip.onCursorChange` for hosts that mirror it.
 
 ### `…/hover`
 
-`HoverResult`, `HoverInfo`, `DotStyle`, `TooltipRender`, `HoverOverlayHandle`,
-and `TooltipMeaning` — **the `declare module` target** for the payload your
-tooltip card receives.
+`HoverResult`, `HoverInfo`, `DotStyle`, `TooltipRender`, `SelectionRender`,
+`HoverOverlayHandle`, and `TooltipMeaning` — **the `declare module` target** for
+the payload your tooltip card receives.
+
+**Hover and selection.** The overlay keeps two cells: the _hovered_ one, which
+the engine's pointer loop drives through `applyHover` and which gets the
+pointer-following card (`tooltipCard`, remounted per cell), and the _selected_
+one, which a host sets with `handle.select(result)` — a tap, a click-to-inspect —
+and which nothing but the next `select` changes. The selected dot is drawn with
+its pop animation, reprojected with everything else, skipped by the hover ring,
+and its meaning is resolved once and handed to the `selectionCard` snippet:
+`(meaning | null, { noData, key })`, rendered once and updated in place, so a
+bottom sheet or a pinned panel persists across selections instead of flickering
+through a remount. A cell that draws no dot is not selectable: `select` clears.
 
 ### `…/dot-style`
 

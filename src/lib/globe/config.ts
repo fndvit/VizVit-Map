@@ -242,7 +242,7 @@ export interface TooltipConfig {
 	onCursorChange?: (cursor: boolean) => void;
 	/** Pointer-leave companion (host cache clear). Runs AFTER the overlay's onHover(null). */
 	onLeave?: () => void;
-	/** Receives the overlay handle once mounted (host drives pushLeavingDot etc.). */
+	/** Receives the overlay handle once mounted (the host drives `applyHover` for taps, `select` for selection). */
 	onReady?: (handle: HoverOverlayHandle) => void;
 }
 

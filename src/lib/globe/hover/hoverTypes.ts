@@ -114,6 +114,18 @@ export type TooltipRender = {
 	noData: boolean;
 };
 
+/**
+ * What the overlay hands the selection snippet beside the resolved
+ * {@link TooltipMeaning} — the render-time facts about the selected cell.
+ */
+export type SelectionRender = {
+	/** Land cell with no data row at all (see {@link TooltipRender.noData}). */
+	noData: boolean;
+	/** The selected cell's key, `null` when nothing is selected. Lets a host that
+	 *  keeps its own per-cell state notice a change without remounting. */
+	key: string | null;
+};
+
 /** Screen-space projector handed to {@link HoverTooltipOverlay.reproject}. */
 export type ToScreen = (lat: number, lng: number) => { x: number; y: number } | null | undefined;
 
@@ -125,14 +137,15 @@ export type ToScreen = (lat: number, lng: number) => { x: number; y: number } | 
 export interface HoverOverlayHandle {
 	/** `onHover` — react to a resolved cell (or `null` on miss/leave). */
 	applyHover(result: HoverResult | null): void;
-	/** Push an externally-owned dot into the leaving trail. */
-	pushLeavingDot(dot: HoverInfo): void;
 	/**
-	 * Set (or clear) the pinned highlight dot — a persistent dot the overlay keeps
-	 * rendering (and reprojecting) after a click-to-inspect. `null` animates the
-	 * current pinned dot out via the leaving trail.
+	 * Select a cell (or clear the selection with `null`). Selection is the
+	 * persistent counterpart of hover: the overlay styles the dot through the
+	 * same `computeStyle`, keeps drawing and reprojecting it until the next
+	 * `select`, resolves its meaning once and hands it to the `selectionCard`
+	 * snippet. Hover events never touch it — a touch pan after a tap moves the
+	 * hover dot, not the selection. A cell that draws no dot clears it.
 	 */
-	setPinned(dot: HoverInfo | null): void;
+	select(result: HoverResult | null): void;
 	/** Reproject every overlay's screen position on camera move. */
 	reproject(toScreen: ToScreen): void;
 	/** Whether any overlay is currently on screen. */

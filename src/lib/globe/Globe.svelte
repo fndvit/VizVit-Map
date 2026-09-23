@@ -27,6 +27,7 @@
 	@prop {(error: unknown) => void} [onerror] - View initialization failed.
 	@prop {string} [class] - Extra classes on the outer container.
 	@prop {Snippet<[TooltipMeaning, TooltipRender]>} [tooltipCard] - Renders the tooltip card for the resolved hovered cell (paired with config.tooltip).
+	@prop {Snippet<[TooltipMeaning | null, SelectionRender]>} [selectionCard] - Renders the SELECTED cell (`overlay.select(result)`): mounted once and updated in place, `null` meaning while nothing is selected.
 	@prop {Snippet} [children] - Host overlays rendered in the globe stage (share the overlay's stacking context).
 -->
 <script lang="ts">
@@ -44,7 +45,8 @@
 		HoverResult,
 		HoverOverlayHandle,
 		TooltipMeaning,
-		TooltipRender
+		TooltipRender,
+		SelectionRender
 	} from './hover/hoverTypes.js';
 
 	let {
@@ -56,6 +58,7 @@
 		onerror,
 		class: className = '',
 		tooltipCard,
+		selectionCard,
 		children
 	}: {
 		config: GlobeConfig;
@@ -66,6 +69,7 @@
 		onerror?: (error: unknown) => void;
 		class?: string;
 		tooltipCard?: Snippet<[TooltipMeaning, TooltipRender]>;
+		selectionCard?: Snippet<[TooltipMeaning | null, SelectionRender]>;
 		children?: Snippet;
 	} = $props();
 
@@ -207,6 +211,7 @@
 				computeStyle={config.tooltip.computeStyle}
 				meaning={config.tooltip.meaning}
 				card={tooltipCard}
+				{selectionCard}
 				{containerW}
 				{containerH}
 				padTop={config.tooltip.padding?.top ?? 0}
