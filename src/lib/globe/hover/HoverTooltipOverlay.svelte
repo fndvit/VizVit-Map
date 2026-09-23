@@ -17,8 +17,9 @@
   and drives it imperatively (via `bind:this`) from the `hover` capability's
   `onHover`/`onLeave` callbacks and its own camera watcher (`reproject`).
 
-  Renders as a fragment (no wrapper element) so, dropped into the host's
-  positioned container, its `z-[3..7]` layers order exactly as they did inline.
+  Renders as a fragment (no wrapper element) so, dropped into the globe stage,
+  its layers stack by the stage's `--vit-map-z-*` ladder (see hoverOverlay.css,
+  which also places every element — this component ships no utility classes).
 
   @prop {(r: HoverResult) => DotStyle} computeStyle - Mirror-dot visual for a resolved cell.
   @prop {(r: HoverResult) => TooltipMeaning | null} meaning - What the hovered cell means (host-injected); null → the host draws nothing for it, so no card.
@@ -392,10 +393,7 @@
 
 {#if leavingTooltip}
 	{@const lpos = tooltipPos(leavingTooltip.dotX, leavingTooltip.dotY, tooltipElH)}
-	<div
-		class="hex-tooltip-leave pointer-events-none absolute z-[7]"
-		style="left: {lpos.left}px; top: {lpos.top}px;"
-	>
+	<div class="hex-tooltip-leave" style="left: {lpos.left}px; top: {lpos.top}px;">
 		{@render card?.(leavingTooltip.meaning, {
 			skipShimmer: true,
 			noData: leavingTooltip.noData
@@ -407,7 +405,7 @@
 	{#key hover.dotKey}
 		{@const apos = tooltipPos(hover.dotScreenX ?? 0, hover.dotScreenY ?? 0, tooltipElH)}
 		<div
-			class="hex-tooltip-enter pointer-events-none absolute z-[7]"
+			class="hex-tooltip-enter"
 			style="left: {apos.left}px; top: {apos.top}px;"
 			bind:clientHeight={tooltipElH}
 		>
@@ -420,7 +418,7 @@
 {#each leavingDots as ld (ld._id)}
 	{@const low = ld.dotOutlineWidth ?? 0}
 	<div
-		class="hex-hover-dot-leave pointer-events-none absolute z-[4]"
+		class="hex-hover-dot-leave"
 		style="
 			left: {ld.dotScreenX}px;
 			top: {ld.dotScreenY}px;
@@ -435,7 +433,7 @@
 <!-- Pulse rings — independent of hover, always finish their animation -->
 {#each activeRings as ring (ring._id)}
 	<div
-		class="hex-hover-ring pointer-events-none absolute z-[3]"
+		class="hex-hover-ring"
 		style="
 			left: {ring.x}px;
 			top: {ring.y}px;
@@ -451,7 +449,7 @@
 	{#key hover.dotKey}
 		<!-- Animated dot overlay -->
 		<div
-			class="hex-hover-dot pointer-events-none absolute z-[4]"
+			class="hex-hover-dot"
 			style="
 				left: {hover.dotScreenX}px;
 				top: {hover.dotScreenY}px;
@@ -470,7 +468,7 @@
 	{@const pow = pinned.dotOutlineWidth ?? 0}
 	{#key pinned.dotKey}
 		<div
-			class="hex-hover-dot-pinned pointer-events-none absolute z-[5]"
+			class="hex-hover-dot-pinned"
 			style="
 				left: {pinned.dotScreenX}px;
 				top: {pinned.dotScreenY}px;

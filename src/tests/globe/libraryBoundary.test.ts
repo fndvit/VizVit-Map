@@ -20,6 +20,12 @@
  *    named inside a `new URL(...)` *string*, which neither `svelte-check` nor
  *    the unit tests resolve — only a consumer's bundler does, against `dist`,
  *    where the file is `.js`. That has now bitten twice.
+ * 4. **No Tailwind utility classes in the markup.** A consumer's CSS toolchain
+ *    never scans `node_modules`, so a utility class in a published component is
+ *    generated only if the consumer happens to use the same class itself. The
+ *    hover overlay shipped `z-[7]` that way and its card rendered under the
+ *    hover dot in a consumer that did not. Components style themselves with
+ *    scoped `<style>` blocks or the package's own `.css`.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -127,5 +133,23 @@ describe('the map library is packageable', () => {
 		expect(named).toMatch(/\.js$/);
 		const source = named!.replace(/\.js$/, '.ts');
 		expect(existsSync(join(dir, source)) || existsSync(join(dir, named!))).toBe(true);
+	});
+	it('ships no Tailwind utility classes in component markup', () => {
+		// Tokens a Tailwind build would have to generate. Kept literal on purpose:
+		// the list is the contract, not a heuristic — extend it when a new utility
+		// sneaks in rather than loosening it.
+		const utility =
+			/^(z-\[|z-\d|absolute|relative|fixed|sticky|isolate|inset-|pointer-events-|w-full|h-full|w-\[|h-\[|flex|grid|hidden|block|gap-|p[xytblr]?-\d|m[xytblr]?-\d|rounded|shadow|bg-|text-|overflow-)/;
+		const offenders: string[] = [];
+		for (const file of files) {
+			if (!file.endsWith('.svelte')) continue;
+			const source = readFileSync(file, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+			for (const match of source.matchAll(/\bclass="([^"]*)"/g)) {
+				for (const token of match[1].split(/\s+/).filter(Boolean)) {
+					if (utility.test(token)) offenders.push(`${file}: class="${match[1]}" (${token})`);
+				}
+			}
+		}
+		expect(offenders).toEqual([]);
 	});
 });
