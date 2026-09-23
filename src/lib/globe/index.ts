@@ -45,7 +45,8 @@ export type {
 	HoverResult,
 	ToScreen,
 	TooltipMeaning,
-	TooltipRender
+	TooltipRender,
+	SelectionRender
 } from './hover/hoverTypes.js';
 export { setupPinProjection, type PinProjection } from './pinProjection.js';
 export type { Capability, GlobeContext } from './capability.js';

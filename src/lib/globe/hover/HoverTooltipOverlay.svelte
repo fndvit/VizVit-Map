@@ -24,6 +24,7 @@
   @prop {(r: HoverResult) => DotStyle} computeStyle - Mirror-dot visual for a resolved cell.
   @prop {(r: HoverResult) => TooltipMeaning | null} meaning - What the hovered cell means (host-injected); null → the host draws nothing for it, so no card.
   @prop {Snippet<[TooltipMeaning, TooltipRender]>} [card] - Renders the tooltip card for a resolved cell (host-injected).
+  @prop {Snippet<[TooltipMeaning | null, SelectionRender]>} [selectionCard] - Renders the selected cell; mounted once, updated in place.
   @prop {number} containerW - Host container width (for tooltip clamping).
   @prop {number} containerH - Host container height (for tooltip clamping).
   @prop {number} [padTop] - Top clamp padding (clears host chrome). Default 0.
@@ -44,6 +45,7 @@
 		HoverResult,
 		DotStyle,
 		ToScreen,
+		SelectionRender,
 		TooltipMeaning,
 		TooltipRender
 	} from './hoverTypes.js';
@@ -56,6 +58,11 @@
 		/** Renders the tooltip card for a resolved cell meaning — host-injected so
 		 *  the overlay isn't coupled to any one card component. */
 		card?: Snippet<[TooltipMeaning, TooltipRender]>;
+		/** Renders the SELECTED cell — rendered once and updated in place (a
+		 *  `null` meaning while nothing is selected), never remounted per cell,
+		 *  because a selection surface (a sheet, a pinned panel) must not flicker
+		 *  between selections the way a pointer-following card may. */
+		selectionCard?: Snippet<[TooltipMeaning | null, SelectionRender]>;
 		containerW: number;
 		containerH: number;
 		padTop?: number;
@@ -67,7 +74,7 @@
 		leaveDuration?: number;
 		ringDuration?: number;
 		tooltipLeaveDuration?: number;
-		/** Fill opacity for the highlight (hover + pinned) dots. Defaults to 1 —
+		/** Fill opacity for the highlight (hover + selected) dots. Defaults to 1 —
 		 *  the highlight is drawn fully solid so it stays visible regardless of the
 		 *  cell's per-feature transparency (e.g. the percent-opacity encoding). A
 		 *  number pins every highlight to that flat opacity; `null` makes the
@@ -79,6 +86,7 @@
 		computeStyle,
 		meaning,
 		card,
+		selectionCard,
 		containerW,
 		containerH,
 		padTop = 0,
@@ -99,12 +107,13 @@
 		highlightOpacity ?? dotOpacity ?? 1;
 
 	let hover = $state<HoverInfo | null>(null);
-	// Pinned highlight dot — persists a clicked cell's dot until cleared. Owned
-	// here so it reprojects with the rest of the overlay under one camera watcher.
-	let pinned = $state<HoverInfo | null>(null);
-	// The pinned cell's key — the ring/hover-dot for it is skipped (it's already
+	// The selected cell — the persistent counterpart of `hover`: set by `select`,
+	// untouched by hover events, drawn as the pinned dot and reprojected with the
+	// rest of the overlay under one camera watcher.
+	let selected = $state<HoverInfo | null>(null);
+	// The selected cell's key — the ring/hover-dot for it is skipped (it's already
 	// drawn as the pinned dot).
-	const pinnedDotKey = $derived(pinned?.dotKey);
+	const selectedDotKey = $derived(selected?.dotKey);
 	// Current tooltip card height — updated via bind:clientHeight; 300 is the fallback.
 	let tooltipElH = $state(300);
 
@@ -201,6 +210,25 @@
 		});
 	});
 
+	/**
+	 * What the SELECTED cell means — resolved once per selection, the same way
+	 * {@link tooltipMeaning} is for the hover, and handed to `selectionCard`.
+	 * `null` while nothing is selected, so the host's selection surface stays
+	 * mounted and empties rather than unmounting.
+	 */
+	const selectedMeaning = $derived.by<TooltipMeaning | null>(() => {
+		if (!selected) return null;
+		return meaning({
+			resolution: selected.resolution,
+			attributes: selected.attributes,
+			dotScreenX: selected.dotScreenX ?? 0,
+			dotScreenY: selected.dotScreenY ?? 0,
+			dotLat: selected.dotLat ?? 0,
+			dotLng: selected.dotLng ?? 0,
+			noData: selected.noData
+		});
+	});
+
 	// Adds the current hover dot to the leaving trail. Each dot shrinks
 	// independently and is removed after `leaveDuration`.
 	function startLeaveAnimation() {
@@ -268,9 +296,9 @@
 		// No-data cells aren't clickable — keep the default cursor; a hidden cell
 		// isn't there at all.
 		onCursorChange?.(rendered && !result.noData);
-		// Spawn a pulse ring for the new dot (skip if same dot, pinned, an absent
-		// cell, or one that draws nothing — no data dot to pulse around).
-		if (isNewDot && newKey !== pinnedDotKey && rendered && !dotStyle.absent) {
+		// Spawn a pulse ring for the new dot (skip if same dot, the selected cell,
+		// an absent cell, or one that draws nothing — no data dot to pulse around).
+		if (isNewDot && newKey !== selectedDotKey && rendered && !dotStyle.absent) {
 			const rid = ++ringIdCounter;
 			activeRings = [
 				...activeRings,
@@ -315,11 +343,8 @@
 		};
 	}
 
-	/**
-	 * Pushes an externally-owned dot (the host's pinned dot) into the leaving
-	 * trail so it shrinks out. Used by explore's `clearInspected`.
-	 */
-	export function pushLeavingDot(dot: HoverInfo) {
+	/** Pushes a dot into the leaving trail so it shrinks out. */
+	function pushLeavingDot(dot: HoverInfo) {
 		if (dot?.dotScreenX != null && dot.dotColor && dot.dotSize) {
 			const id = ++leavingIdCounter;
 			leavingDots = [...leavingDots, { ...dot, _id: id }];
@@ -330,19 +355,47 @@
 	}
 
 	/**
-	 * Sets (or clears) the pinned highlight dot. Clearing (`null`) animates the
-	 * current pinned dot out via the leaving trail. Used by explore's click-to-
-	 * inspect flow.
+	 * Selects a cell, or clears the selection with `null`. The persistent
+	 * counterpart of {@link applyHover}: styled through the same `computeStyle`,
+	 * drawn as the pinned dot (with its pop animation on a new cell), reprojected
+	 * with everything else, resolved once into {@link selectedMeaning} for the
+	 * `selectionCard` snippet — and never touched by hover events. Clearing
+	 * animates the dot out through the leaving trail. A cell that draws no dot
+	 * (`computeStyle(...).hidden`) is not selectable: it clears instead.
 	 */
-	export function setPinned(dot: HoverInfo | null) {
-		if (!dot && pinned) pushLeavingDot(pinned);
-		pinned = dot;
+	export function select(result: HoverResult | null) {
+		if (!result) {
+			if (selected) pushLeavingDot(selected);
+			selected = null;
+			return;
+		}
+		const dotStyle = computeStyle(result);
+		if (dotStyle.hidden) {
+			select(null);
+			return;
+		}
+		const newKey = String(result.attributes.h3id ?? '');
+		if (selected && selected.dotKey !== newKey) pushLeavingDot(selected);
+		selected = {
+			resolution: result.resolution,
+			attributes: result.attributes,
+			noData: result.noData ?? false,
+			dotScreenX: result.dotScreenX,
+			dotScreenY: result.dotScreenY,
+			dotColor: dotStyle.color,
+			dotOpacity: dotStyle.opacity,
+			dotSize: dotStyle.size,
+			dotOutlineColor: dotStyle.outlineColor,
+			dotOutlineWidth: dotStyle.outlineWidth,
+			dotKey: newKey,
+			dotLat: result.dotLat,
+			dotLng: result.dotLng
+		};
 	}
 
 	/**
 	 * Reprojects every overlay's screen position from its geo coords — called by
-	 * the host's camera watcher on camera move. (The host's own pinned dot, if
-	 * any, is reprojected by the host.)
+	 * the globe's camera watcher on camera move; the selected dot included.
 	 */
 	export function reproject(toScreen: ToScreen) {
 		if (hover?.dotLat != null && hover.dotLng != null) {
@@ -366,9 +419,9 @@
 			const sp = toScreen(leavingTooltip.dotLat, leavingTooltip.dotLng);
 			if (sp) leavingTooltip = { ...leavingTooltip, dotX: sp.x, dotY: sp.y };
 		}
-		if (pinned?.dotLat != null && pinned.dotLng != null) {
-			const sp = toScreen(pinned.dotLat, pinned.dotLng);
-			if (sp) pinned = { ...pinned, dotScreenX: sp.x, dotScreenY: sp.y };
+		if (selected?.dotLat != null && selected.dotLng != null) {
+			const sp = toScreen(selected.dotLat, selected.dotLng);
+			if (sp) selected = { ...selected, dotScreenX: sp.x, dotScreenY: sp.y };
 		}
 	}
 
@@ -376,7 +429,7 @@
 	export function hasOverlays(): boolean {
 		return (
 			hover != null ||
-			pinned != null ||
+			selected != null ||
 			leavingDots.length > 0 ||
 			activeRings.length > 0 ||
 			leavingTooltip != null
@@ -444,7 +497,7 @@
 	></div>
 {/each}
 
-{#if hover?.dotScreenX != null && hover.dotColor && hover.dotSize && hover.dotKey !== pinnedDotKey}
+{#if hover?.dotScreenX != null && hover.dotColor && hover.dotSize && hover.dotKey !== selectedDotKey}
 	{@const ow = hover.dotOutlineWidth ?? 0}
 	{#key hover.dotKey}
 		<!-- Animated dot overlay -->
@@ -463,21 +516,29 @@
 	{/key}
 {/if}
 
-<!-- Pinned dot — pop animation on click, stays highlighted until cleared -->
-{#if pinned?.dotScreenX != null && pinned.dotColor && pinned.dotSize}
-	{@const pow = pinned.dotOutlineWidth ?? 0}
-	{#key pinned.dotKey}
+<!-- Selected dot — pop animation on a new selection, stays highlighted until cleared -->
+{#if selected?.dotScreenX != null && selected.dotColor && selected.dotSize}
+	{@const pow = selected.dotOutlineWidth ?? 0}
+	{#key selected.dotKey}
 		<div
 			class="hex-hover-dot-pinned"
 			style="
-				left: {pinned.dotScreenX}px;
-				top: {pinned.dotScreenY}px;
-				width: {pinned.dotSize}px;
-				height: {pinned.dotSize}px;
-				background: {pinned.dotColor};
-				opacity: {resolveOpacity(pinned.dotOpacity)};
-				border: {pow}px solid {pinned.dotOutlineColor ?? 'transparent'};
+				left: {selected.dotScreenX}px;
+				top: {selected.dotScreenY}px;
+				width: {selected.dotSize}px;
+				height: {selected.dotSize}px;
+				background: {selected.dotColor};
+				opacity: {resolveOpacity(selected.dotOpacity)};
+				border: {pow}px solid {selected.dotOutlineColor ?? 'transparent'};
 			"
 		></div>
 	{/key}
 {/if}
+
+<!-- The selection surface: rendered ONCE (no key), fed a null meaning while
+     nothing is selected, so a host's sheet or panel persists across selections
+     and only its content changes. -->
+{@render selectionCard?.(selectedMeaning, {
+	noData: selected?.noData ?? false,
+	key: selected?.dotKey ?? null
+})}
