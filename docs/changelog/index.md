@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 | Version                       | Released   | What it is                                                                     |
 | ----------------------------- | ---------- | ------------------------------------------------------------------------------ |
 | [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                                         |
+| [0.5.0](./0.5.0.md)           | 2026-09-23 | Style-complete: the overlay stacks by its own CSS and a named z-ladder         |
 | [0.4.0](./0.4.0.md)           | 2026-09-22 | Label primitives: a style compiler, a vector tile overlay, fonts, tile schemes |
 | [0.3.0](./0.3.0.md)           | 2026-09-22 | The tooltip is placed by the shared `anchor` from `ui/overlay`                 |
 | [0.2.1](./0.2.1.md)           | 2026-09-21 | A pinned camera stops re-flying on unrelated config changes                    |
