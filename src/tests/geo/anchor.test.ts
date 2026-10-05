@@ -79,6 +79,20 @@ describe('anchorOf (GeoJSON)', () => {
 	});
 });
 
+describe('anchorOf across the antimeridian', () => {
+	it('puts the centroid of a polygon crossing ±180° on the polygon, not near 0°', () => {
+		const fiji = [
+			[176, -20],
+			[-178, -20],
+			[-178, -16],
+			[176, -16],
+			[176, -20]
+		];
+		expect(anchorOf({ type: 'Polygon', coordinates: [fiji] })).toEqual([179, -18]);
+		expect(anchorOfArcgis({ rings: [fiji] })).toEqual([179, -18]);
+	});
+});
+
 describe('anchorOfArcgis (ArcGIS JSON)', () => {
 	it('applies the same rule to points, paths and rings', () => {
 		expect(anchorOfArcgis({ x: 3, y: 4 })).toEqual([3, 4]);
