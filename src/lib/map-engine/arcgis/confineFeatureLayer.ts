@@ -78,9 +78,16 @@ export interface ConfinableLayer {
 	 * touching the live one. Without it, a lookup briefly resets the live
 	 * expression instead.
 	 *
-	 * @returns The copy.
+	 * @returns The copy — not yet loaded: its object id field, geometry type
+	 *   and capabilities are empty until {@link load} resolves.
 	 */
 	clone?(): ConfinableLayer;
+	/**
+	 * Loads the layer's service description (ArcGIS `Layer.load`).
+	 *
+	 * @returns Resolves once the layer's fields and capabilities are known.
+	 */
+	load?(): Promise<unknown>;
 }
 
 /**
@@ -128,9 +135,8 @@ export async function featureIdsInRegion(
 		}
 		for (const feature of features) {
 			const anchor = anchorOfArcgis(feature.geometry);
-			if (anchor && region.contains(anchor[0], anchor[1])) {
-				ids.add(Number(feature.attributes[oidField]));
-			}
+			const id = Number(feature.attributes[oidField]);
+			if (anchor && Number.isFinite(id) && region.contains(anchor[0], anchor[1])) ids.add(id);
 		}
 	}
 	return [...ids];
@@ -198,6 +204,9 @@ export function confinementOf(
 				queryLayer = layer.clone();
 				queryLayer.definitionExpression = original;
 			}
+			// A clone starts unloaded: until it loads, its object id field is
+			// empty, and the lookup would ask for no fields and pin `IN (NaN)`.
+			await queryLayer.load?.();
 			return idsIn(queryLayer, next);
 		}
 		// No clone: the layer's own queries honour its expression, so search

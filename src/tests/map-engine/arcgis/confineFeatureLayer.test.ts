@@ -91,6 +91,10 @@ function fakeLayer(
 						layer.clones++;
 						const copy = fakeLayer(features, { ...opts, where: undefined });
 						copy.queries = layer.queries;
+						// Like ArcGIS: a clone knows its fields only once loaded.
+						const loaded = { objectIdField: copy.objectIdField };
+						Object.assign(copy, { objectIdField: '' });
+						copy.load = async () => Object.assign(copy, loaded);
 						return copy;
 					}
 				})
@@ -193,6 +197,14 @@ describe('confinementOf / confineFeatureLayer', () => {
 			'(rank = 1) AND objectid IN (2)'
 		]);
 		expect(layer.clones).toBe(1);
+	});
+
+	it('loads the clone before querying it — an unloaded clone has no object id field', async () => {
+		const layer = fakeLayer([pt(4, 1, 1)]);
+		await confineFeatureLayer(layer, region);
+		await confineFeatureLayer(layer, region);
+		expect(layer.definitionExpression).toBe('objectid IN (4)');
+		expect(layer.queries.every((q) => (q.outFields as string[])[0] === 'objectid')).toBe(true);
 	});
 
 	it('without a clone, searches with the original expression', async () => {
