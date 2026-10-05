@@ -4,6 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ArcgisProvider } from '$lib/map-engine/arcgis/ArcgisProvider';
 import { ProviderMismatchError, zoomForScale } from '$lib/map-engine';
+import { regionShapeOf } from '$lib/geo';
+import { describeLayerRegionContract } from '../../helpers/layerRegionContract';
 
 /** A fake ArcGIS `GraphicsLayer`. */
 class FakeGraphicsLayer {
@@ -34,9 +36,34 @@ class FakeGeoJSONLayer {
 	renderer: any;
 	url: string;
 	elevationInfo: any;
+	objectIdField = '__OBJECTID';
+	type = 'geojson';
+	definitionExpression: string | null = null;
+	/** Features a region query answers with (ArcGIS JSON geometry). */
+	features: { attributes: Record<string, unknown>; geometry: any }[] = [];
 	constructor(public opts: any) {
 		Object.assign(this, opts);
 		this.url = opts.url;
+	}
+	async load() {}
+	/** Answers with every feature — the confinement queries a clone carrying the original expression. */
+	async queryFeatures() {
+		await Promise.resolve();
+		return { features: this.features };
+	}
+	clone() {
+		const copy = new FakeGeoJSONLayer(this.opts);
+		copy.features = this.features;
+		return copy;
+	}
+	/** The object ids the current expression lets through (the forms the confinement writes). */
+	drawnIds(): number[] {
+		const all = this.features.map((f) => Number(f.attributes.__OBJECTID));
+		const expr = this.definitionExpression;
+		if (!expr) return all;
+		if (expr === '1=0') return [];
+		const ids = /__OBJECTID IN \(([^)]*)\)/.exec(expr)?.[1].split(',').map(Number) ?? [];
+		return all.filter((id) => ids.includes(id));
 	}
 }
 
@@ -448,4 +475,97 @@ describe('ArcgisProvider — native escape hatch', () => {
 		const { provider } = makeProvider();
 		expect(() => provider.native('maplibre')).toThrow(ProviderMismatchError);
 	});
+});
+
+describe('ArcgisProvider — setRegion', () => {
+	/** [0, 10] × [0, 10]. */
+	const region = regionShapeOf({
+		type: 'Polygon',
+		coordinates: [
+			[
+				[0, 0],
+				[10, 0],
+				[10, 10],
+				[0, 10],
+				[0, 0]
+			]
+		]
+	});
+
+	it('draws only the points inside, keeps the region across set, and releases it', async () => {
+		const { provider, view } = makeProvider();
+		const layer = provider.layers.points({
+			id: 'm',
+			items: [
+				{ id: 'in', lng: 5, lat: 5, symbol: SYMBOL },
+				{ id: 'out', lng: 50, lat: 5, symbol: SYMBOL }
+			]
+		});
+		const arcLayer = (view.map.add as any).mock.calls[0][0];
+		await layer.setRegion(region);
+		expect(arcLayer.graphics.map((g: any) => g.attributes.__id)).toEqual(['in']);
+		expect(layer.getRegion()).toBe(region);
+
+		layer.set([{ id: 'out2', lng: -5, lat: 5, symbol: SYMBOL }]);
+		expect(arcLayer.graphics).toHaveLength(0);
+
+		await layer.setRegion(null);
+		expect(arcLayer.graphics.map((g: any) => g.attributes.__id)).toEqual(['out2']);
+	});
+
+	it('confines a GeoJSON layer by its features` anchors', async () => {
+		const { provider, view } = makeProvider();
+		const layer = provider.layers.geojson({ id: 'g', source: { url: '/g.json' }, style: {} });
+		const arcLayer = (view.map.add as any).mock.calls[0][0];
+		const square = (x: number) => ({
+			rings: [
+				[
+					[x, 1],
+					[x + 2, 1],
+					[x + 2, 3],
+					[x, 3],
+					[x, 1]
+				]
+			]
+		});
+		arcLayer.features = [
+			{ attributes: { __OBJECTID: 1 }, geometry: square(2) },
+			{ attributes: { __OBJECTID: 2 }, geometry: square(40) }
+		];
+		await layer.setRegion(region);
+		expect(arcLayer.definitionExpression).toBe('__OBJECTID IN (1)');
+		await layer.setRegion(null);
+		expect(arcLayer.definitionExpression).toBeNull();
+	});
+});
+
+/** ArcGIS JSON geometry for a contract feature. */
+function arcgisGeometry(geometry: { type: string; coordinates: any }) {
+	if (geometry.type === 'Point') return { x: geometry.coordinates[0], y: geometry.coordinates[1] };
+	if (geometry.type === 'LineString') return { paths: [geometry.coordinates] };
+	return { rings: geometry.coordinates };
+}
+
+describeLayerRegionContract('ArcGIS', () => {
+	const { provider, view } = makeProvider();
+	const added = () => (view.map.add as any).mock.calls.at(-1)[0];
+	return {
+		points(items) {
+			const handle = provider.layers.points({ id: 'p', items });
+			const layer = added();
+			return { handle, drawn: () => layer.graphics.map((g: any) => g.attributes.__id) };
+		},
+		geojson(features) {
+			const handle = provider.layers.geojson({ id: 'g', source: { url: '/c.json' }, style: {} });
+			const layer = added();
+			layer.features = features.map((f, i) => ({
+				attributes: { __OBJECTID: i + 1, id: f.properties.id },
+				geometry: arcgisGeometry(f.geometry)
+			}));
+			return {
+				handle,
+				drawn: () => layer.drawnIds().map((id: number) => features[id - 1].properties.id)
+			};
+		}
+	};
 });

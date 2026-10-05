@@ -1,6 +1,6 @@
 {
 	"name": "@vit-foundation/map",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"description": "A config-driven globe and map component, with a provider seam so the same features run on ArcGIS, MapLibre or a test double",
 	"license": "Apache-2.0",
 	"type": "module",
@@ -92,6 +92,11 @@
 			"types": "./dist/map-engine/geocode.d.ts",
 			"svelte": "./dist/map-engine/geocode.js",
 			"default": "./dist/map-engine/geocode.js"
+		},
+		"./geo": {
+			"types": "./dist/geo/index.d.ts",
+			"svelte": "./dist/geo/index.js",
+			"default": "./dist/geo/index.js"
 		},
 		"./arcgis": {
 			"types": "./dist/map-engine/arcgis/index.d.ts",

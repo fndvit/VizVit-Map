@@ -22,6 +22,8 @@ import type {
 	PointSymbol,
 	ScreenPoint
 } from '../provider.js';
+import type { RegionShape } from '../../geo/region.js';
+import { confinementOf } from './confineFeatureLayer.js';
 
 /** Attribute carrying a point item's neutral id on its ArcGIS graphic. */
 const ID_ATTR = '__id';
@@ -153,9 +155,16 @@ export function createPointLayer(deps: LayerDeps, spec: PointLayerSpec): PointLa
 		});
 	}
 
+	/** The items as last set, so a region change can re-filter them. */
+	let current: readonly PointItem[] = [];
+	let region: RegionShape | null = null;
+
 	function set(items: readonly PointItem[]): void {
+		current = items;
 		layer.removeAll();
-		for (const item of items) layer.add(graphicFor(item));
+		for (const item of items) {
+			if (!region || region.contains(item.lng, item.lat)) layer.add(graphicFor(item));
+		}
 	}
 
 	set(spec.items ?? []);
@@ -164,6 +173,11 @@ export function createPointLayer(deps: LayerDeps, spec: PointLayerSpec): PointLa
 	return {
 		...base,
 		set,
+		async setRegion(next: RegionShape | null) {
+			region = next;
+			set(current);
+		},
+		getRegion: () => region,
 		restyle(id: string, symbol: PointSymbol) {
 			layer.graphics.forEach((g: any) => {
 				if (g.attributes?.[ID_ATTR] === id) g.symbol = markerSymbol(symbol);
@@ -221,8 +235,20 @@ export function createGeoJsonLayer(deps: LayerDeps, spec: GeoJsonLayerSpec): Geo
 		if (objectUrl) URL.revokeObjectURL(objectUrl);
 		objectUrl = null;
 	});
+	/** Bumped per call, so a call superseded while the layer loads does nothing. */
+	let generation = 0;
 	return {
 		...base,
+		// The GeoJSONLayer is a client-side FeatureLayer: the shared confinement
+		// (ids by anchor → definitionExpression) applies to it unchanged, and it
+		// owns the rest: the original expression, superseded calls, the region.
+		async setRegion(next: RegionShape | null) {
+			const mine = ++generation;
+			await layer.load();
+			if (mine !== generation) return;
+			await confinementOf(layer).set(next);
+		},
+		getRegion: () => confinementOf(layer).region,
 		setStyle(style: GeoJsonStyle) {
 			layer.renderer = geoJsonRenderer(style) as any;
 		}

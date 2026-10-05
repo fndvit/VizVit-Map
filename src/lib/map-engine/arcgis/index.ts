@@ -43,6 +43,21 @@ export {
 	type LabelZoomBand,
 	type StyleSymbolLayer
 } from './labelStyle.js';
+// A feature service narrowed to the features inside a region.
+export {
+	confineFeatureLayer,
+	confinementOf,
+	featureIdsInRegion,
+	type ConfinableLayer,
+	type FeatureLayerConfinement
+} from './confineFeatureLayer.js';
+// Every page of a feature query, with the stop rules written once.
+export {
+	pageThrough,
+	type PagedResult,
+	type PageThroughOptions,
+	type QueryPage
+} from './pageThrough.js';
 // A vector tile style drawn above the basemap, filtered to some of its layers.
 export {
 	addVectorTileOverlay,

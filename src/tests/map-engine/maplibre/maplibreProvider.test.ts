@@ -12,6 +12,9 @@ import { ProviderMismatchError, scaleForZoom, zoomForScale } from '$lib/map-engi
  * questions the provider asks. Projection is a simple linear mapping so screen
  * assertions stay readable.
  */
+import { regionShapeOf } from '$lib/geo';
+import { describeLayerRegionContract } from '../../helpers/layerRegionContract';
+
 function fakeMap() {
 	const handlers: Record<string, ((e: any) => void)[]> = {};
 	const sources = new Map<string, any>();
@@ -357,4 +360,94 @@ describe('flatStyleFor', () => {
 		expect(style.version).toBe(8);
 		expect(style.layers.map((l: any) => l.type)).toEqual(['background', 'fill']);
 	});
+});
+
+describe('MaplibreProvider — setRegion', () => {
+	/** [0, 10] × [0, 10]. */
+	const region = regionShapeOf({
+		type: 'Polygon',
+		coordinates: [
+			[
+				[0, 0],
+				[10, 0],
+				[10, 10],
+				[0, 10],
+				[0, 0]
+			]
+		]
+	});
+	const idsOf = (data: any) => data.features.map((f: any) => f.id ?? f.properties?.id);
+
+	it('feeds the points source only the items inside', async () => {
+		const { provider, map } = makeProvider();
+		const layer = provider.layers.points({
+			id: 'm',
+			items: [
+				{ id: 'in', lng: 5, lat: 5, symbol: SYMBOL },
+				{ id: 'out', lng: 50, lat: 5, symbol: SYMBOL }
+			]
+		});
+		const source = map.getSource('pts:m');
+		await layer.setRegion(region);
+		expect(idsOf(source.setData.mock.calls.at(-1)[0])).toEqual(['in']);
+		await layer.setRegion(null);
+		expect(idsOf(source.setData.mock.calls.at(-1)[0])).toEqual(['in', 'out']);
+	});
+
+	it('filters a GeoJSON source by anchor, reading a URL source once, and restores it', async () => {
+		const { provider, map } = makeProvider();
+		const collection = {
+			type: 'FeatureCollection',
+			features: [
+				{
+					type: 'Feature',
+					id: 'a',
+					geometry: {
+						type: 'LineString',
+						coordinates: [
+							[1, 1],
+							[2, 2],
+							[30, 30]
+						]
+					}
+				},
+				{ type: 'Feature', id: 'b', geometry: { type: 'Point', coordinates: [40, 40] } }
+			]
+		};
+		const fetchSpy = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValue({ ok: true, json: async () => collection } as Response);
+		const layer = provider.layers.geojson({ id: 'g', source: { url: '/g.json' }, style: {} });
+		const source = map.getSource('geo:g');
+
+		await layer.setRegion(region);
+		await layer.setRegion(region);
+		expect(idsOf(source.setData.mock.calls.at(-1)[0])).toEqual(['a']);
+		expect(fetchSpy).toHaveBeenCalledOnce();
+
+		await layer.setRegion(null);
+		expect(source.setData.mock.calls.at(-1)[0]).toBe('/g.json');
+		fetchSpy.mockRestore();
+	});
+});
+
+describeLayerRegionContract('MapLibre', () => {
+	const { provider, map } = makeProvider();
+	/** The features a source carries now: its last setData, else what it was added with. */
+	const current = (sourceId: string) => {
+		const source = map.getSource(sourceId);
+		const last = source.setData.mock.calls.at(-1)?.[0];
+		return (last ?? source.data).features as any[];
+	};
+	return {
+		points(items) {
+			const handle = provider.layers.points({ id: 'p', items });
+			return { handle, drawn: () => current('pts:p').map((f) => f.properties.id) };
+		},
+		geojson(features) {
+			const data = { type: 'FeatureCollection', features };
+			const handle = provider.layers.geojson({ id: 'g', source: { data }, style: {} });
+			return { handle, drawn: () => current('geo:g').map((f) => f.properties.id) };
+		}
+	};
 });

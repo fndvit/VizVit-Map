@@ -1,6 +1,6 @@
 # Reference
 
-Fifteen entry points. They exist so a leaf component can import the one symbol
+Sixteen entry points. They exist so a leaf component can import the one symbol
 it needs without pulling the whole graph — a barrel import in a widely-used
 component is how a build's memory use gets away from you.
 
@@ -9,21 +9,23 @@ whole surface; import the narrow subpath in a component or a helper.
 
 ## Find it by task
 
-| You want to…                      | Import from                     |
-| --------------------------------- | ------------------------------- |
-| Render a map                      | `@vit-foundation/map`           |
-| Drive a view without `<Globe>`    | `…/engine`                      |
-| Type a function against the ports | `…/provider`                    |
-| Write a capability                | `…/capability`                  |
-| Register your capability          | `…/registry`                    |
-| Add a sub-config to `GlobeConfig` | `…/config` (the augment target) |
-| Add a payload to the tooltip      | `…/hover` (the augment target)  |
-| Test your capability              | `…/testing`                     |
-| Search for a place                | `…/geocode`                     |
-| Stream PMTiles                    | `…/tiles`                       |
-| Convert between zoom and scale    | `…/engine`                      |
-| Load web fonts for map labels     | `…/engine`                      |
-| Draw labels from a vector style   | `…/arcgis`                      |
+| You want to…                      | Import from                        |
+| --------------------------------- | ---------------------------------- |
+| Render a map                      | `@vit-foundation/map`              |
+| Drive a view without `<Globe>`    | `…/engine`                         |
+| Type a function against the ports | `…/provider`                       |
+| Write a capability                | `…/capability`                     |
+| Register your capability          | `…/registry`                       |
+| Add a sub-config to `GlobeConfig` | `…/config` (the augment target)    |
+| Add a payload to the tooltip      | `…/hover` (the augment target)     |
+| Test your capability              | `…/testing`                        |
+| Search for a place                | `…/geocode`                        |
+| Confine a layer to a region       | `…/geo` + `LayerHandle.setRegion`  |
+| Narrow a feature service to one   | `…/arcgis` (`confineFeatureLayer`) |
+| Stream PMTiles                    | `…/tiles`                          |
+| Convert between zoom and scale    | `…/engine`                         |
+| Load web fonts for map labels     | `…/engine`                         |
+| Draw labels from a vector style   | `…/arcgis`                         |
 
 ## The entry points
 
@@ -131,6 +133,30 @@ package, and the right one for typing a helper.
 `suggestPlaces`, `locatePlace`. Place search over the public REST API, with no
 map and no SDK — a search box can use this on its own.
 
+### `…/geo`
+
+Provider-neutral geometry, with no map, no SDK and no other import — a leaf.
+
+- `regionShapeOf(geojson)` / `loadRegionShape(url)` turn a Polygon or
+  MultiPolygon file (any wrapping) into a `RegionShape`: a `bbox`, and
+  `contains(lon, lat)` — exact, holes respected, **ring winding ignored**. (d3's
+  `geoContains` reads an RFC 7946 file as its complement: the world minus the
+  region.) A region across ±180° is detected and tested in a 0–360° frame; its
+  `bbox` then has `west > east`, and `regionBoxes(shape)` splits it in two for
+  services that cannot take a wrapping box. `loadRegionShape` fetches each URL
+  once per page.
+- `anchorOf(geometry)` / `anchorOfArcgis(geometry)` — the one point that
+  decides whether a feature is inside a region: a point itself, a line's middle
+  vertex, a polygon's centroid. Every provider filters by it.
+
+```ts
+import { loadRegionShape } from '@vit-foundation/map/geo';
+
+const deccan = await loadRegionShape('/regions/deccan.geojson');
+await markers.setRegion(deccan); // any layer handle, any provider
+await markers.setRegion(null); // released
+```
+
 ### `…/arcgis` · `…/maplibre`
 
 The adapters. You rarely import these for the provider itself — `MapEngine`
@@ -169,6 +195,50 @@ you actually host plus the weight keyword ArcGIS accepts. The compiler knows no
 service, no palette and no font. `textSymbol` also does the px → point
 conversion (`pxToPoints`) that a style's sizes need and an ArcGIS `TextSymbol`
 expects; passing px straight through renders every label 4/3 too large.
+
+#### A feature service narrowed to a region
+
+`confineFeatureLayer(layer, region)` narrows a loaded `FeatureLayer` — or a
+client-side one such as a `GeoJSONLayer` — to the features whose anchor lies in
+a `RegionShape`. One box query (two across the antimeridian), read with
+`pageThrough`; the exact polygon test on each anchor; then the kept ids are
+pinned as `objectid IN (…)`, AND-ed with the layer's own `definitionExpression`.
+A feature service then only ever returns the region's features.
+
+It is shorthand for `confinementOf(layer).set(region)`. A layer has **one
+confinement** that owns what must stay right across calls: the layer's own
+expression (re-read if you change it while confined, restored on `null`), a
+query clone so a new region is looked up without touching the live layer (no
+world refetch), and a generation, so the later of two quick calls wins and the
+superseded one resolves with `null`. A lookup that fails rejects and leaves the
+previous region in force; `confinementOf(layer).region` is the region applied.
+
+```ts
+import { confineFeatureLayer } from '@vit-foundation/map/arcgis';
+
+await layer.load();
+const kept = await confineFeatureLayer(layer, region); // how many features remain
+if (kept === 0) map.remove(layer); // nothing of it in the region
+await confineFeatureLayer(layer, null); // back to the layer's own expression
+```
+
+Ids, not the polygon, because an outline can be megabytes and would travel with
+every request. The ids are pinned when it runs (a republished service needs
+another call), and the list travels with each request — right for regions of up
+to a few thousand features. The layer is typed structurally
+(`ConfinableLayer`); nothing imports `@arcgis/core`. `featureIdsInRegion` is the
+query half on its own; geometry is generalized for it only on a server-backed
+(`type: 'feature'`) line or polygon layer. The ArcGIS adapter's GeoJSON handle
+implements `setRegion` with it.
+
+#### Every page of a feature query
+
+`pageThrough(fetchPage, { pageSize, supportsPagination })` reads every page of a
+query, whichever transport fetches it (a layer's `queryFeatures`, a REST
+`fetch`). Following `exceededTransferLimit` alone can loop forever — a service
+without pagination answers every offset with the first page — so it advances by
+what each page returned, stops on an empty page, reads one page from a service
+that cannot page (returning `complete: false`), and gives up past `maxPages`.
 
 #### A vector tile style above the basemap
 

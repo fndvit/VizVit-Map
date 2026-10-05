@@ -112,6 +112,7 @@ without pulling a whole barrel's dependency graph into its bundle.
 | `@vit-foundation/map/dot-style`        | `DotStyle` and the curve primitives dot renderers share                                                                                                            |
 | `@vit-foundation/map/engine`           | `MapEngine`, the `MapProvider` contract, scale helpers, web font loading, geocoding                                                                                |
 | `@vit-foundation/map/provider`         | the provider contract alone — the types a capability programs against                                                                                              |
+| `@vit-foundation/map/geo`              | regions and feature anchors: `regionShapeOf`, `loadRegionShape`, `anchorOf` — no engine, no SDK                                                                    |
 | `@vit-foundation/map/geocode`          | place search, view-independent (no engine, no SDK until it is called)                                                                                              |
 | `@vit-foundation/map/arcgis`           | the ArcGIS adapter, plus the label style compiler and vector tile overlay an SDK-bound capability draws labels with                                                |
 | `@vit-foundation/map/maplibre`         | the MapLibre adapter                                                                                                                                               |

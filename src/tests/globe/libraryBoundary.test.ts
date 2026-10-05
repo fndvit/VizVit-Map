@@ -89,6 +89,20 @@ describe('the map library is packageable', () => {
 		expect(offenders).toEqual([]);
 	});
 
+	it('keeps the geometry module a leaf', () => {
+		// `…/geo` is imported by every provider adapter and by consumers that load
+		// no map at all; one import of the engine, the globe layer or an SDK would
+		// drag that graph in with it.
+		const offenders: string[] = [];
+		for (const file of files) {
+			if (!file.startsWith(join('src', 'lib', 'geo'))) continue;
+			for (const specifier of specifiersOf(readFileSync(file, 'utf8'))) {
+				if (!specifier.startsWith('./')) offenders.push(`${file} imports ${specifier}`);
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
 	it("hardcodes no consumer's column names", () => {
 		// The published adapter used to read `attributes['h3id']` directly — this
 		// project's pipeline convention, and not a stable one even there (the same
