@@ -200,10 +200,18 @@ expects; passing px straight through renders every label 4/3 too large.
 
 `confineFeatureLayer(layer, region)` narrows a loaded `FeatureLayer` — or a
 client-side one such as a `GeoJSONLayer` — to the features whose anchor lies in
-a `RegionShape`. One box query (two across the antimeridian), paged past the
-record limit; the exact polygon test on each anchor; then the kept ids are
+a `RegionShape`. One box query (two across the antimeridian), read with
+`pageThrough`; the exact polygon test on each anchor; then the kept ids are
 pinned as `objectid IN (…)`, AND-ed with the layer's own `definitionExpression`.
 A feature service then only ever returns the region's features.
+
+It is shorthand for `confinementOf(layer).set(region)`. A layer has **one
+confinement** that owns what must stay right across calls: the layer's own
+expression (re-read if you change it while confined, restored on `null`), a
+query clone so a new region is looked up without touching the live layer (no
+world refetch), and a generation, so the later of two quick calls wins and the
+superseded one resolves with `null`. A lookup that fails rejects and leaves the
+previous region in force; `confinementOf(layer).region` is the region applied.
 
 ```ts
 import { confineFeatureLayer } from '@vit-foundation/map/arcgis';
@@ -219,8 +227,18 @@ every request. The ids are pinned when it runs (a republished service needs
 another call), and the list travels with each request — right for regions of up
 to a few thousand features. The layer is typed structurally
 (`ConfinableLayer`); nothing imports `@arcgis/core`. `featureIdsInRegion` is the
-query half on its own. The ArcGIS adapter's GeoJSON handle implements
-`setRegion` with it.
+query half on its own; geometry is generalized for it only on a server-backed
+(`type: 'feature'`) line or polygon layer. The ArcGIS adapter's GeoJSON handle
+implements `setRegion` with it.
+
+#### Every page of a feature query
+
+`pageThrough(fetchPage, { pageSize, supportsPagination })` reads every page of a
+query, whichever transport fetches it (a layer's `queryFeatures`, a REST
+`fetch`). Following `exceededTransferLimit` alone can loop forever — a service
+without pagination answers every offset with the first page — so it advances by
+what each page returned, stops on an empty page, reads one page from a service
+that cannot page (returning `complete: false`), and gives up past `maxPages`.
 
 #### A vector tile style above the basemap
 

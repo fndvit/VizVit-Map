@@ -41,8 +41,12 @@ polygon's centroid — is inside. The rule is the package's, so every adapter ke
 the same features: ArcGIS filters a points layer's graphics and narrows a GeoJSON
 layer by object ids (`confineFeatureLayer`); MapLibre filters the source data it
 feeds the map (its `within` expression keeps only features _entirely_ inside, a
-different rule, so it is not used); the fake records the region. It resolves once
-the confined set is drawn, and a points layer keeps the region across `set`.
+different rule, so it is not used); the fake applies the same rule and exposes
+what it draws (`drawn`). It resolves once the confined set is drawn, the later
+of two quick calls wins, `getRegion()` reports the region applied, and a points
+layer keeps the region across `set`. One contract suite
+(`src/tests/helpers/layerRegionContract.ts`) runs against every adapter, so they
+cannot drift apart — a fourth adapter should run it too.
 
 Hit testing lives on the handle on purpose. "Which of _my_ items is under the
 pointer" is a question about your layer, so answering it never requires an SDK

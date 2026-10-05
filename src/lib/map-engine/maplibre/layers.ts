@@ -247,7 +247,10 @@ export function createGeoJsonLayer(
 	const original: unknown = 'url' in spec.source ? spec.source.url : spec.source.data;
 	/** What the source carries now: the original, or the region's features. */
 	let data: unknown = original;
+	/** The region the source is filtered to — set once the filtered data is in. */
 	let region: RegionShape | null = null;
+	/** Bumped per call, so a call superseded while the source is read does nothing. */
+	let generation = 0;
 	/** The parsed source, read once when a region first needs its features. */
 	let parsed: Promise<{ features?: { geometry?: GeometryLike }[] }> | null = null;
 
@@ -301,7 +304,7 @@ export function createGeoJsonLayer(
 			base.applyAll();
 		},
 		async setRegion(next: RegionShape | null) {
-			region = next;
+			const mine = ++generation;
 			if (next === null) {
 				data = original;
 			} else {
@@ -310,10 +313,17 @@ export function createGeoJsonLayer(
 				// provider applies. Filtering the source by anchor keeps one rule.
 				parsed ??=
 					typeof original === 'string'
-						? fetch(original).then((r) => r.json())
+						? fetch(original).then((r) => {
+								if (!r.ok)
+									throw new Error(`GeoJSON source ${original} failed to load (${r.status})`);
+								return r.json();
+							})
 						: Promise.resolve(original as { features?: { geometry?: GeometryLike }[] });
-				const source = await parsed;
-				if (region !== next) return;
+				const source = await parsed.catch((error) => {
+					parsed = null; // a failed read is retried by the next call
+					throw error;
+				});
+				if (mine !== generation) return;
 				data = {
 					type: 'FeatureCollection',
 					features: (source.features ?? []).filter((feature) => {
@@ -322,6 +332,7 @@ export function createGeoJsonLayer(
 					})
 				};
 			}
+			region = next;
 			map.getSource(sourceId)?.setData(data);
 		},
 		getRegion: () => region,

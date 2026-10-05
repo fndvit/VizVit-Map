@@ -10,6 +10,9 @@
  * - a polygon's anchor is the area centroid of its largest exterior ring,
  *   falling back to the ring's box centre when the ring has no area.
  *
+ * A part that crosses ±180° is measured in a 0–360° frame and its anchor
+ * wrapped back, so Fiji's centroid lands on Fiji and not near 0°.
+ *
  * A concave polygon's centroid can fall outside it; for a region filter that
  * is the right trade — the rule is cheap, deterministic and the same on every
  * provider. A feature that straddles the region's edge is in or out by where
@@ -26,12 +29,35 @@ export interface GeometryLike {
 }
 
 /**
+ * A ring or path in a frame where it is contiguous: longitudes shifted into
+ * 0–360° when consecutive vertices jump more than 180° (it crosses ±180°).
+ *
+ * @param points - The vertices.
+ * @returns The vertices, shifted when needed.
+ */
+function unwrapped(points: readonly Position[]): readonly Position[] {
+	const crosses = points.some((p, i) => i > 0 && Math.abs(p[0] - points[i - 1][0]) > 180);
+	return crosses ? points.map(([x, y]) => [x < 0 ? x + 360 : x, y]) : points;
+}
+
+/**
+ * A longitude back in −180–180°.
+ *
+ * @param point - `[lon, lat]`, possibly in 0–360°.
+ * @returns The point with its longitude wrapped.
+ */
+function wrapped([x, y]: [number, number]): [number, number] {
+	return [x > 180 ? x - 360 : x, y];
+}
+
+/**
  * The area centroid of a ring (shoelace), or its box centre when degenerate.
  *
  * @param ring - The ring's vertices.
  * @returns The anchor and the ring's absolute area.
  */
-function ringCentroid(ring: readonly Position[]): { point: [number, number]; area: number } {
+function ringCentroid(input: readonly Position[]): { point: [number, number]; area: number } {
+	const ring = unwrapped(input);
 	let a = 0;
 	let cx = 0;
 	let cy = 0;
@@ -47,11 +73,14 @@ function ringCentroid(ring: readonly Position[]): { point: [number, number]; are
 		const xs = ring.map((p) => p[0]);
 		const ys = ring.map((p) => p[1]);
 		return {
-			point: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2],
+			point: wrapped([
+				(Math.min(...xs) + Math.max(...xs)) / 2,
+				(Math.min(...ys) + Math.max(...ys)) / 2
+			]),
 			area: 0
 		};
 	}
-	return { point: [cx / (3 * a), cy / (3 * a)], area: Math.abs(a / 2) };
+	return { point: wrapped([cx / (3 * a), cy / (3 * a)]), area: Math.abs(a / 2) };
 }
 
 /**

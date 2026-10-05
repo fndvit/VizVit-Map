@@ -27,6 +27,7 @@ import {
 } from '$lib/map-engine/provider.js';
 import type { GlobeContext } from '$lib/globe/capability.js';
 import type { RegionShape } from '$lib/geo/region.js';
+import { anchorOf, type GeometryLike } from '$lib/geo/anchor.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- test double */
 
@@ -35,6 +36,8 @@ export interface FakePointLayer extends PointLayerHandle {
 	kind: 'points';
 	/** Every item as last set, inside the region or not. */
 	items: PointItem[];
+	/** The items the layer draws: {@link items} inside the region, by the package's anchor rule. */
+	readonly drawn: PointItem[];
 	/** The region the layer is confined to (`setRegion`), or `null`. */
 	region: RegionShape | null;
 	visible: boolean;
@@ -50,6 +53,12 @@ export interface FakeGeoJsonLayer extends GeoJsonLayerHandle {
 	source: GeoJsonLayerSpec['source'];
 	/** The region the layer is confined to (`setRegion`), or `null`. */
 	region: RegionShape | null;
+	/**
+	 * The features the layer draws, for an inline `data` source: those whose
+	 * anchor is inside the region (all of them without one). `undefined` for a
+	 * URL source, which the fake never reads.
+	 */
+	readonly drawn: { geometry?: GeometryLike }[] | undefined;
 	style: GeoJsonStyle;
 	visible: boolean;
 	opacity: number;
@@ -243,6 +252,10 @@ export function makeFakeProvider(options: FakeProviderOptions = {}): FakeProvide
 					},
 					hitTest: async () => provider.hits[spec.id] ?? null
 				});
+				// A getter, so it follows `items` and `region` (a spread would copy a value).
+				Object.defineProperty(h, 'drawn', {
+					get: () => (h.region ? h.items.filter((i) => h.region!.contains(i.lng, i.lat)) : h.items)
+				});
 				return h;
 			},
 			geojson(spec: GeoJsonLayerSpec): GeoJsonLayerHandle {
@@ -252,6 +265,18 @@ export function makeFakeProvider(options: FakeProviderOptions = {}): FakeProvide
 					style: spec.style,
 					setStyle(style: GeoJsonStyle) {
 						h.style = style;
+					}
+				});
+				Object.defineProperty(h, 'drawn', {
+					get: () => {
+						if (!('data' in spec.source)) return undefined;
+						const features =
+							(spec.source.data as { features?: { geometry?: GeometryLike }[] }).features ?? [];
+						if (!h.region) return features;
+						return features.filter((f) => {
+							const anchor = anchorOf(f.geometry);
+							return anchor !== null && h.region!.contains(anchor[0], anchor[1]);
+						});
 					}
 				});
 				return h;

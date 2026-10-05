@@ -23,8 +23,13 @@ renamed to its version and a new, empty one takes its place — see
   filters a points layer's graphics and narrows a GeoJSON layer by object ids;
   MapLibre filters the source it feeds the map; the fake records the region.
 - **`confineFeatureLayer(layer, region)`** in `…/arcgis` (with
-  `featureIdsInRegion`): narrows a loaded `FeatureLayer` to a region server-side,
-  by pinning the ids inside as `objectid IN (…)` on its `definitionExpression`.
+  `confinementOf` and `featureIdsInRegion`): narrows a loaded `FeatureLayer` to a
+  region server-side, by pinning the ids inside as `objectid IN (…)` on its
+  `definitionExpression`. One confinement per layer keeps the original
+  expression, looks regions up on a clone (no refetch of the live layer) and
+  lets the later of two quick calls win.
+- **`pageThrough(fetchPage, options)`** in `…/arcgis`: every page of a feature
+  query, with stop rules that cannot loop on a service without pagination.
 
 **Upgrading:** `LayerHandle` gains two required members. A consumer that only
 calls the package's providers needs nothing; one that implements its own

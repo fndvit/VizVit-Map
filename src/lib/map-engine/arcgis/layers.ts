@@ -23,7 +23,7 @@ import type {
 	ScreenPoint
 } from '../provider.js';
 import type { RegionShape } from '../../geo/region.js';
-import { confineFeatureLayer } from './confineFeatureLayer.js';
+import { confinementOf } from './confineFeatureLayer.js';
 
 /** Attribute carrying a point item's neutral id on its ArcGIS graphic. */
 const ID_ATTR = '__id';
@@ -235,18 +235,20 @@ export function createGeoJsonLayer(deps: LayerDeps, spec: GeoJsonLayerSpec): Geo
 		if (objectUrl) URL.revokeObjectURL(objectUrl);
 		objectUrl = null;
 	});
-	let region: RegionShape | null = null;
+	/** Bumped per call, so a call superseded while the layer loads does nothing. */
+	let generation = 0;
 	return {
 		...base,
 		// The GeoJSONLayer is a client-side FeatureLayer: the shared confinement
-		// (ids by anchor → definitionExpression) applies to it unchanged.
+		// (ids by anchor → definitionExpression) applies to it unchanged, and it
+		// owns the rest: the original expression, superseded calls, the region.
 		async setRegion(next: RegionShape | null) {
-			region = next;
+			const mine = ++generation;
 			await layer.load();
-			if (region !== next) return;
-			await confineFeatureLayer(layer, next);
+			if (mine !== generation) return;
+			await confinementOf(layer).set(next);
 		},
-		getRegion: () => region,
+		getRegion: () => confinementOf(layer).region,
 		setStyle(style: GeoJsonStyle) {
 			layer.renderer = geoJsonRenderer(style) as any;
 		}
