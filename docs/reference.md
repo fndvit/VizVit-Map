@@ -148,6 +148,8 @@ Provider-neutral geometry, with no map, no SDK and no other import — a leaf.
   `bbox` then has `west > east`, and `regionBoxes(shape)` splits it in two for
   services that cannot take a wrapping box. `loadRegionShape` fetches each URL
   once per page.
+- `regionCenter(shape)` — the centre of a region's bounding box (centred across
+  ±180° for a wrapping one): where a camera aims to frame it.
 - `anchorOf(geometry)` / `anchorOfArcgis(geometry)` — the one point that
   decides whether a feature is inside a region: a point itself, a line's middle
   vertex, a polygon's centroid. Every provider filters by it.

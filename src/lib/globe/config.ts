@@ -282,9 +282,9 @@ export interface FocusRegion {
 /**
  * `focus` capability config — the one area the globe is about.
  *
- * A host declares the region once; the `focus` capability draws its outline,
- * and every capability named in {@link confine} confines itself to it (draws
- * only what lies inside). A capability learns its region through
+ * A host declares the region once; the `outlines` capability draws its outline
+ * (as one more outline, keyed by the region id), and every capability named in
+ * {@link confine} confines itself to it (draws only what lies inside). A capability learns its region through
  * `focusRegionFor(config, name)` in its rule's `select`, so capabilities never
  * depend on each other. The package's `markers` and `pins` honour it; a host
  * capability does the same with its own name.
@@ -303,7 +303,11 @@ export interface FocusConfig {
 	outline?: { color?: string; width?: number } | false;
 	/** Whether the outline is shown — drives a 500 ms fade. Default `true`. */
 	visible?: boolean;
-	/** Names of the capabilities that confine themselves to the region (e.g. `['markers']`). */
+	/**
+	 * Names of the capabilities that confine themselves to the region (e.g.
+	 * `['markers']`), as their rules are named. A name no mounted capability
+	 * answers to is warned about when the globe resolves its capabilities.
+	 */
 	confine?: readonly string[];
 }
 
@@ -335,7 +339,7 @@ export interface GlobeConfig {
 	/**
 	 * The capability rule set `<Globe>` resolves this config against — the second
 	 * half of the OCP seam. Omit for the library's neutral set
-	 * (`DEFAULT_CAPABILITY_RULES`: markers, hover, pins, outlines, focus); pass a host
+	 * (`DEFAULT_CAPABILITY_RULES`: markers, hover, pins, outlines); pass a host
 	 * set to add domain-bound capabilities a published library cannot ship.
 	 *
 	 * This site passes `SITE_CAPABILITY_RULES` (`$lib/site-globe/rules`), which
@@ -388,7 +392,10 @@ export interface GlobeConfig {
 	tooltip?: TooltipConfig;
 	/** `outlines` capability config — one stroke-only region boundary per entry. */
 	outlines?: OutlineConfig[];
-	/** `focus` capability config — the region the globe is about, outlined and confinable. */
+	/**
+	 * The region the globe is about: outlined by the `outlines` capability and
+	 * confined to by the capabilities `confine` names.
+	 */
 	focus?: FocusConfig;
 }
 

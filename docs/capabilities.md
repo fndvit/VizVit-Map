@@ -1,8 +1,8 @@
 # Capabilities
 
 A **capability** is one globe feature, self-contained, with a tiny lifecycle.
-Markers, pins, outlines, the focus and the cursor hover are written exactly the
-way yours will be.
+Markers, pins, outlines and the cursor hover are written exactly the way yours
+will be.
 
 ```ts
 interface Capability<C> {
@@ -139,9 +139,12 @@ map, it is probably reaching for `native()` when a port would do.
 
 ## Focus: one region, confined capabilities
 
-`GlobeConfig.focus` names the one area the globe is about. The `focus`
-capability outlines it; every capability listed in `confine` confines itself to
-it — draws only what lies inside.
+`GlobeConfig.focus` names the one area the globe is about. The `outlines`
+capability draws its outline — one more outline, keyed by the region id, which
+replaces an authored outline with the same id rather than drawing the boundary
+twice — and every capability listed in `confine` confines itself to it: draws
+only what lies inside. A `confine` name no mounted capability answers to is
+warned about when the globe resolves its capabilities.
 
 ```ts
 const config: GlobeConfig = {
@@ -158,8 +161,8 @@ const config: GlobeConfig = {
 
 The package's `markers` (through `LayerHandle.setRegion`) and `pins` (by
 filtering the items it projects) honour it. A host capability opts in the same
-way: its rule reads the region in `select`, so it never depends on the `focus`
-capability — the rule from [What a capability cannot do](#what-a-capability-cannot-do)
+way: its rule reads the region in `select`, so it never depends on the
+`outlines` capability that draws the focus — the rule from [What a capability cannot do](#what-a-capability-cannot-do)
 holds.
 
 ```ts

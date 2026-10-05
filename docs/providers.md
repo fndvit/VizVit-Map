@@ -19,11 +19,11 @@ interface MapProvider {
 
 ## The three adapters
 
-| Adapter      | Import                         | State                                                            |
-| ------------ | ------------------------------ | ---------------------------------------------------------------- |
-| **ArcGIS**   | `@vit-foundation/map/arcgis`   | Production. `SceneView` (3D) and `MapView` (2D).                 |
-| **MapLibre** | `@vit-foundation/map/maplibre` | Globe projection. Runs markers, pins, outlines, focus and hover. |
-| **Fake**     | `@vit-foundation/map/testing`  | In-memory. No SDK, no GPU, no DOM.                               |
+| Adapter      | Import                         | State                                                                             |
+| ------------ | ------------------------------ | --------------------------------------------------------------------------------- |
+| **ArcGIS**   | `@vit-foundation/map/arcgis`   | Production. `SceneView` (3D) and `MapView` (2D).                                  |
+| **MapLibre** | `@vit-foundation/map/maplibre` | Globe projection. Runs markers, pins, outlines (and the focus outline) and hover. |
+| **Fake**     | `@vit-foundation/map/testing`  | In-memory. No SDK, no GPU, no DOM.                                                |
 
 You rarely import an adapter directly — `MapEngine` picks one from
 `options.provider` and loads it dynamically, so a consumer that only uses
