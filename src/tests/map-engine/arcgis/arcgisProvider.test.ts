@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ArcgisProvider } from '$lib/map-engine/arcgis/ArcgisProvider';
 import { ProviderMismatchError, zoomForScale } from '$lib/map-engine';
+import { regionShapeOf } from '$lib/geo';
 
 /** A fake ArcGIS `GraphicsLayer`. */
 class FakeGraphicsLayer {
@@ -34,9 +35,18 @@ class FakeGeoJSONLayer {
 	renderer: any;
 	url: string;
 	elevationInfo: any;
+	objectIdField = '__OBJECTID';
+	geometryType = 'polygon';
+	definitionExpression: string | null = null;
+	/** Features a region query answers with (ArcGIS JSON geometry). */
+	features: { attributes: Record<string, unknown>; geometry: any }[] = [];
 	constructor(public opts: any) {
 		Object.assign(this, opts);
 		this.url = opts.url;
+	}
+	async load() {}
+	async queryFeatures() {
+		return { features: this.features };
 	}
 }
 
@@ -447,5 +457,67 @@ describe('ArcgisProvider — native escape hatch', () => {
 	it('throws for any other provider', () => {
 		const { provider } = makeProvider();
 		expect(() => provider.native('maplibre')).toThrow(ProviderMismatchError);
+	});
+});
+
+describe('ArcgisProvider — setRegion', () => {
+	/** [0, 10] × [0, 10]. */
+	const region = regionShapeOf({
+		type: 'Polygon',
+		coordinates: [
+			[
+				[0, 0],
+				[10, 0],
+				[10, 10],
+				[0, 10],
+				[0, 0]
+			]
+		]
+	});
+
+	it('draws only the points inside, keeps the region across set, and releases it', async () => {
+		const { provider, view } = makeProvider();
+		const layer = provider.layers.points({
+			id: 'm',
+			items: [
+				{ id: 'in', lng: 5, lat: 5, symbol: SYMBOL },
+				{ id: 'out', lng: 50, lat: 5, symbol: SYMBOL }
+			]
+		});
+		const arcLayer = (view.map.add as any).mock.calls[0][0];
+		await layer.setRegion(region);
+		expect(arcLayer.graphics.map((g: any) => g.attributes.__id)).toEqual(['in']);
+		expect(layer.getRegion()).toBe(region);
+
+		layer.set([{ id: 'out2', lng: -5, lat: 5, symbol: SYMBOL }]);
+		expect(arcLayer.graphics).toHaveLength(0);
+
+		await layer.setRegion(null);
+		expect(arcLayer.graphics.map((g: any) => g.attributes.__id)).toEqual(['out2']);
+	});
+
+	it('confines a GeoJSON layer by its features` anchors', async () => {
+		const { provider, view } = makeProvider();
+		const layer = provider.layers.geojson({ id: 'g', source: { url: '/g.json' }, style: {} });
+		const arcLayer = (view.map.add as any).mock.calls[0][0];
+		const square = (x: number) => ({
+			rings: [
+				[
+					[x, 1],
+					[x + 2, 1],
+					[x + 2, 3],
+					[x, 3],
+					[x, 1]
+				]
+			]
+		});
+		arcLayer.features = [
+			{ attributes: { __OBJECTID: 1 }, geometry: square(2) },
+			{ attributes: { __OBJECTID: 2 }, geometry: square(40) }
+		];
+		await layer.setRegion(region);
+		expect(arcLayer.definitionExpression).toBe('__OBJECTID IN (1)');
+		await layer.setRegion(null);
+		expect(arcLayer.definitionExpression).toBeNull();
 	});
 });

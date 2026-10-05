@@ -32,7 +32,17 @@ MapLibre never pulls ArcGIS into its bundle.
 ## Layer handles, not SDK objects
 
 `layers.points(spec)` and `.geojson(spec)` return a **handle**: visibility,
-opacity, scale range, placement, and for points `set` / `restyle` / `hitTest`.
+opacity, scale range, placement, a region (`setRegion`), and for points `set` /
+`restyle` / `hitTest`.
+
+`setRegion(shape)` confines any handle to a `RegionShape` from `…/geo`: a
+feature is drawn when its **anchor** — a point itself, a line's middle vertex, a
+polygon's centroid — is inside. The rule is the package's, so every adapter keeps
+the same features: ArcGIS filters a points layer's graphics and narrows a GeoJSON
+layer by object ids (`confineFeatureLayer`); MapLibre filters the source data it
+feeds the map (its `within` expression keeps only features _entirely_ inside, a
+different rule, so it is not used); the fake records the region. It resolves once
+the confined set is drawn, and a points layer keeps the region across `set`.
 
 Hit testing lives on the handle on purpose. "Which of _my_ items is under the
 pointer" is a question about your layer, so answering it never requires an SDK

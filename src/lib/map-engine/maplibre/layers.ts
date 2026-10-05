@@ -22,6 +22,8 @@ import type {
 	ScreenPoint
 } from '../provider.js';
 import { zoomForScale } from '../scale.js';
+import type { RegionShape } from '../../geo/region.js';
+import { anchorOf, type GeometryLike } from '../../geo/anchor.js';
 import { ensureIcon } from './icons.js';
 
 /** Default hit-test tolerance in pixels — markers are small, so the box helps. */
@@ -137,12 +139,14 @@ export function createPointLayer(map: any, spec: PointLayerSpec): PointLayerHand
 	const sourceId = `pts:${spec.id}`;
 	const layerId = `pts:${spec.id}:symbols`;
 	let items: PointItem[] = [...(spec.items ?? [])];
+	let region: RegionShape | null = null;
 
-	/** The GeoJSON the source carries, with an icon registered per item. */
+	/** The GeoJSON the source carries — the items inside the region — with an icon per item. */
 	function collection() {
+		const drawn = region ? items.filter((item) => region!.contains(item.lng, item.lat)) : items;
 		return {
 			type: 'FeatureCollection' as const,
-			features: items.map((item) => ({
+			features: drawn.map((item) => ({
 				type: 'Feature' as const,
 				id: item.id,
 				geometry: { type: 'Point' as const, coordinates: [item.lng, item.lat] },
@@ -198,6 +202,11 @@ export function createPointLayer(map: any, spec: PointLayerSpec): PointLayerHand
 			items = [...next];
 			map.getSource(sourceId)?.setData(collection());
 		},
+		async setRegion(next: RegionShape | null) {
+			region = next;
+			map.getSource(sourceId)?.setData(collection());
+		},
+		getRegion: () => region,
 		restyle(id: string, symbol: PointSymbol) {
 			const item = items.find((i) => i.id === id);
 			if (!item) return;
@@ -234,13 +243,17 @@ export function createGeoJsonLayer(
 	const fillId = `geo:${spec.id}:fill`;
 	const lineId = `geo:${spec.id}:line`;
 	let style: GeoJsonStyle = spec.style;
+	/** The source as given: a URL, or inline data. */
+	const original: unknown = 'url' in spec.source ? spec.source.url : spec.source.data;
+	/** What the source carries now: the original, or the region's features. */
+	let data: unknown = original;
+	let region: RegionShape | null = null;
+	/** The parsed source, read once when a region first needs its features. */
+	let parsed: Promise<{ features?: { geometry?: GeometryLike }[] }> | null = null;
 
 	function attach() {
 		if (!map.getSource(sourceId)) {
-			map.addSource(sourceId, {
-				type: 'geojson',
-				data: 'url' in spec.source ? spec.source.url : spec.source.data
-			});
+			map.addSource(sourceId, { type: 'geojson', data });
 		}
 		if (style.fill != null && !map.getLayer(fillId)) {
 			map.addLayer({
@@ -287,6 +300,31 @@ export function createGeoJsonLayer(
 			attach();
 			base.applyAll();
 		},
+		async setRegion(next: RegionShape | null) {
+			region = next;
+			if (next === null) {
+				data = original;
+			} else {
+				// MapLibre filters by expression, but `within` keeps only features
+				// ENTIRELY inside — a different rule from the anchor every other
+				// provider applies. Filtering the source by anchor keeps one rule.
+				parsed ??=
+					typeof original === 'string'
+						? fetch(original).then((r) => r.json())
+						: Promise.resolve(original as { features?: { geometry?: GeometryLike }[] });
+				const source = await parsed;
+				if (region !== next) return;
+				data = {
+					type: 'FeatureCollection',
+					features: (source.features ?? []).filter((feature) => {
+						const anchor = anchorOf(feature.geometry);
+						return anchor !== null && next.contains(anchor[0], anchor[1]);
+					})
+				};
+			}
+			map.getSource(sourceId)?.setData(data);
+		},
+		getRegion: () => region,
 		setStyle(next: GeoJsonStyle) {
 			style = next;
 			if (next.fill != null && map.getLayer(fillId)) {

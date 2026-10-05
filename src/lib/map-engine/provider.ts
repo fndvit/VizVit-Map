@@ -17,6 +17,7 @@
  */
 
 import type { FlatColors, SceneCamera, ViewMode } from './types.js';
+import type { RegionShape } from '../geo/region.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- native SDK surfaces are untyped by design */
 
@@ -263,6 +264,20 @@ export interface LayerHandle {
 	/** LOD window in ArcGIS convention: `0` = unbounded. */
 	setScaleRange(minScale: number, maxScale: number): void;
 	setPlacement(placement: Placement): void;
+	/**
+	 * Confines the layer to a region: only the features whose **anchor** lies
+	 * inside are drawn — a point itself, a line's middle vertex, a polygon's
+	 * centroid (`anchorOf` in `…/geo`), the same rule on every provider. A
+	 * points layer keeps the region across {@link PointLayerHandle.set}.
+	 * `null` releases it.
+	 *
+	 * @param region - The region (`regionShapeOf` / `loadRegionShape`), or `null`.
+	 * @returns Resolves once the layer draws the confined set (a GeoJSON layer
+	 *   may have to read its source first).
+	 */
+	setRegion(region: RegionShape | null): Promise<void>;
+	/** The region the layer is confined to, or `null`. */
+	getRegion(): RegionShape | null;
 	remove(): void;
 }
 

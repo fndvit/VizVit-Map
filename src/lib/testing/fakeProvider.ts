@@ -26,13 +26,17 @@ import {
 	type ScreenPoint
 } from '$lib/map-engine/provider.js';
 import type { GlobeContext } from '$lib/globe/capability.js';
+import type { RegionShape } from '$lib/geo/region.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- test double */
 
 /** A recorded points layer: the handle plus the state tests assert on. */
 export interface FakePointLayer extends PointLayerHandle {
 	kind: 'points';
+	/** Every item as last set, inside the region or not. */
 	items: PointItem[];
+	/** The region the layer is confined to (`setRegion`), or `null`. */
+	region: RegionShape | null;
 	visible: boolean;
 	opacity: number;
 	scaleRange: [number, number];
@@ -44,6 +48,8 @@ export interface FakePointLayer extends PointLayerHandle {
 export interface FakeGeoJsonLayer extends GeoJsonLayerHandle {
 	kind: 'geojson';
 	source: GeoJsonLayerSpec['source'];
+	/** The region the layer is confined to (`setRegion`), or `null`. */
+	region: RegionShape | null;
 	style: GeoJsonStyle;
 	visible: boolean;
 	opacity: number;
@@ -146,6 +152,11 @@ export function makeFakeProvider(options: FakeProviderOptions = {}): FakeProvide
 			setPlacement(p: Placement) {
 				h.placement = p;
 			},
+			region: null,
+			async setRegion(r: RegionShape | null) {
+				h.region = r;
+			},
+			getRegion: () => h.region,
 			remove() {
 				h.removed = true;
 				live.delete(spec.id);
