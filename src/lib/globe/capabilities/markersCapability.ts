@@ -14,7 +14,18 @@
 
 import type { Handle, PointItem, PointLayerHandle, PointSymbol } from '$lib/map-engine/provider.js';
 import { defineRule, type Capability, type GlobeContext } from '../capability.js';
-import { resolveAnimation, type MarkersConfig } from '../config.js';
+import { resolveAnimation, type FocusRegion, type MarkersConfig } from '../config.js';
+import { createFocusRegionTracker, focusRegionFor } from '../focus.js';
+import type { RegionShape } from '../../geo/region.js';
+
+/**
+ * What the capability is configured with: the `markers` sub-config plus the
+ * focused region it is confined to (`focus.confine` listing `'markers'`).
+ */
+export interface MarkersCapabilityConfig extends MarkersConfig {
+	/** The region to confine the markers to, or `null`/absent for none. */
+	region?: FocusRegion | null;
+}
 
 /**
  * Item id of the "you are here" marker. It is not one of the config's items, so
@@ -58,9 +69,12 @@ function currentMarkerSymbol(): PointSymbol {
 /**
  * Creates the `markers` capability.
  *
+ * @param loadRegion - Loads a focused region's shape. Default: `loadRegionShape`.
  * @returns A fresh, unmounted capability instance.
  */
-export function createMarkersCapability(): Capability<MarkersConfig> {
+export function createMarkersCapability(
+	loadRegion?: (src: string) => Promise<RegionShape>
+): Capability<MarkersCapabilityConfig> {
 	/** The provider points layer holding the marker symbols; null until setup. */
 	let layer: PointLayerHandle | null = null;
 	/** The items last handed to the layer (so `restyle` iterates what is drawn). */
@@ -71,6 +85,13 @@ export function createMarkersCapability(): Capability<MarkersConfig> {
 	let lastActiveId: string | undefined;
 	/** Handle for the map-click listener; removed on destroy. */
 	let clickHandle: Handle | null = null;
+	/**
+	 * Confines the layer to the focused region: the layer keeps the region
+	 * across `set`, so a region change is the only thing to apply.
+	 */
+	const region = createFocusRegionTracker((shape) => {
+		void layer?.setRegion(shape);
+	}, loadRegion);
 
 	/** Rebuilds the layer's items from the current config. */
 	function render() {
@@ -149,6 +170,7 @@ export function createMarkersCapability(): Capability<MarkersConfig> {
 			cfg = config;
 			layer = ctx.provider.layers.points({ id: 'markers', placement: 'floating' });
 			render();
+			region.set(config.region);
 			lastActiveId = config.activeId;
 
 			clickHandle = ctx.provider.events.on('click', async (event) => {
@@ -160,6 +182,7 @@ export function createMarkersCapability(): Capability<MarkersConfig> {
 		update(ctx, config) {
 			cfg = config;
 			if (!layer) return;
+			region.set(config.region);
 			restyle(config.activeId);
 			if (config.activeId !== lastActiveId) {
 				lastActiveId = config.activeId;
@@ -178,10 +201,13 @@ export function createMarkersCapability(): Capability<MarkersConfig> {
 	};
 }
 
-/** Registry rule: active when a `markers` sub-config is present. */
-export const markersRule = defineRule<MarkersConfig>({
+/**
+ * Registry rule: active when a `markers` sub-config is present. Selects the
+ * focused region with it when `focus.confine` lists `'markers'`.
+ */
+export const markersRule = defineRule<MarkersCapabilityConfig>({
 	name: 'markers',
 	applies: (config) => config.markers != null,
-	select: (config) => config.markers!,
-	create: createMarkersCapability
+	select: (config) => ({ ...config.markers!, region: focusRegionFor(config, 'markers') }),
+	create: () => createMarkersCapability()
 });

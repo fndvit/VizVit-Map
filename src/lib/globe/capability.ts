@@ -97,3 +97,6 @@ export function defineRule<C>(rule: {
 }): CapabilityRule {
 	return rule as CapabilityRule;
 }
+
+// How a rule learns the focused region its capability is confined to.
+export { createFocusRegionTracker, focusRegionFor, type FocusRegionTracker } from './focus.js';

@@ -9,7 +9,7 @@
  *
  * The rule set is **injectable**, which is what makes the globe layer
  * publishable: {@link DEFAULT_CAPABILITY_RULES} is the neutral set a package can
- * ship (markers, hover, pins, outlines), and a host adds its domain-bound
+ * ship (markers, hover, pins, outlines, focus), and a host adds its domain-bound
  * capabilities — this site's explore dot tiers, hex overlay and click-to-inspect
  * — by passing its own set through {@link GlobeConfig.capabilities}
  * (`$lib/site-globe/rules`). A published `<Globe>` must not carry a rule whose
@@ -23,6 +23,7 @@ import { markersRule } from './capabilities/markersCapability.js';
 import { hoverRule } from './capabilities/hoverCapability.js';
 import { pinsRule } from './capabilities/pinsCapability.js';
 import { outlinesRule } from './capabilities/outlineCapability.js';
+import { focusRule } from './capabilities/focusCapability.js';
 
 export type { CapabilityRule, ResolvedCapability } from './capability.js';
 export { defineRule } from './capability.js';
@@ -36,7 +37,8 @@ export const DEFAULT_CAPABILITY_RULES: CapabilityRule[] = [
 	markersRule,
 	hoverRule,
 	pinsRule,
-	outlinesRule
+	outlinesRule,
+	focusRule
 ];
 
 /**

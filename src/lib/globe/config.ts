@@ -18,7 +18,7 @@
  *
  * This module is part of the **packageable globe library**: it describes only
  * features the library itself ships (basemap, camera, markers, pins, outlines,
- * hover, tooltip, animation, padding, quality, engine) and imports nothing from
+ * focus, hover, tooltip, animation, padding, quality, engine) and imports nothing from
  * `$lib/{config,explore,data,components}`. The NatGeo explore/story sub-configs
  * — `dataLayers`, `hexOverlay`, `validation` — live in the app's globe layer
  * (`$lib/site-globe/config`), because a published `<Globe>` cannot ship a
@@ -268,6 +268,45 @@ export interface OutlineConfig {
 	width?: number;
 }
 
+/** The region a {@link FocusConfig} focuses on. */
+export interface FocusRegion {
+	/**
+	 * Stable identity (e.g. `'deccan'`). The outline layer is keyed by it, and a
+	 * capability confined to the region reloads it only when the id changes.
+	 */
+	id: string;
+	/** URL of the region's GeoJSON polygon(s). */
+	src: string;
+}
+
+/**
+ * `focus` capability config — the one area the globe is about.
+ *
+ * A host declares the region once; the `focus` capability draws its outline,
+ * and every capability named in {@link confine} confines itself to it (draws
+ * only what lies inside). A capability learns its region through
+ * `focusRegionFor(config, name)` in its rule's `select`, so capabilities never
+ * depend on each other. The package's `markers` and `pins` honour it; a host
+ * capability does the same with its own name.
+ */
+export interface FocusConfig {
+	/**
+	 * The region, or `null` for none. A host whose focus changes over time (a
+	 * scrolly) passes `focus` on every step — `null` where nothing is focused —
+	 * because capabilities are resolved once, at view-ready.
+	 */
+	region: FocusRegion | null;
+	/**
+	 * The outline's stroke, or `false` for no outline (the region still
+	 * confines). Default: black, 1.5 px.
+	 */
+	outline?: { color?: string; width?: number } | false;
+	/** Whether the outline is shown — drives a 500 ms fade. Default `true`. */
+	visible?: boolean;
+	/** Names of the capabilities that confine themselves to the region (e.g. `['markers']`). */
+	confine?: readonly string[];
+}
+
 /**
  * The one argument object the `<Globe>` component takes.
  *
@@ -296,7 +335,7 @@ export interface GlobeConfig {
 	/**
 	 * The capability rule set `<Globe>` resolves this config against — the second
 	 * half of the OCP seam. Omit for the library's neutral set
-	 * (`DEFAULT_CAPABILITY_RULES`: markers, hover, pins, outlines); pass a host
+	 * (`DEFAULT_CAPABILITY_RULES`: markers, hover, pins, outlines, focus); pass a host
 	 * set to add domain-bound capabilities a published library cannot ship.
 	 *
 	 * This site passes `SITE_CAPABILITY_RULES` (`$lib/site-globe/rules`), which
@@ -349,6 +388,8 @@ export interface GlobeConfig {
 	tooltip?: TooltipConfig;
 	/** `outlines` capability config — one stroke-only region boundary per entry. */
 	outlines?: OutlineConfig[];
+	/** `focus` capability config — the region the globe is about, outlined and confinable. */
+	focus?: FocusConfig;
 }
 
 /** Resolves an {@link AnimationConfig} to concrete {@link FlyToOptions}. */

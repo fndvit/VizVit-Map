@@ -9,23 +9,24 @@ whole surface; import the narrow subpath in a component or a helper.
 
 ## Find it by task
 
-| You want to…                      | Import from                        |
-| --------------------------------- | ---------------------------------- |
-| Render a map                      | `@vit-foundation/map`              |
-| Drive a view without `<Globe>`    | `…/engine`                         |
-| Type a function against the ports | `…/provider`                       |
-| Write a capability                | `…/capability`                     |
-| Register your capability          | `…/registry`                       |
-| Add a sub-config to `GlobeConfig` | `…/config` (the augment target)    |
-| Add a payload to the tooltip      | `…/hover` (the augment target)     |
-| Test your capability              | `…/testing`                        |
-| Search for a place                | `…/geocode`                        |
-| Confine a layer to a region       | `…/geo` + `LayerHandle.setRegion`  |
-| Narrow a feature service to one   | `…/arcgis` (`confineFeatureLayer`) |
-| Stream PMTiles                    | `…/tiles`                          |
-| Convert between zoom and scale    | `…/engine`                         |
-| Load web fonts for map labels     | `…/engine`                         |
-| Draw labels from a vector style   | `…/arcgis`                         |
+| You want to…                          | Import from                                             |
+| ------------------------------------- | ------------------------------------------------------- |
+| Render a map                          | `@vit-foundation/map`                                   |
+| Drive a view without `<Globe>`        | `…/engine`                                              |
+| Type a function against the ports     | `…/provider`                                            |
+| Write a capability                    | `…/capability`                                          |
+| Register your capability              | `…/registry`                                            |
+| Add a sub-config to `GlobeConfig`     | `…/config` (the augment target)                         |
+| Add a payload to the tooltip          | `…/hover` (the augment target)                          |
+| Test your capability                  | `…/testing`                                             |
+| Search for a place                    | `…/geocode`                                             |
+| Focus on a region (outline + confine) | `GlobeConfig.focus` + `…/capability` (`focusRegionFor`) |
+| Confine a layer to a region           | `…/geo` + `LayerHandle.setRegion`                       |
+| Narrow a feature service to one       | `…/arcgis` (`confineFeatureLayer`)                      |
+| Stream PMTiles                        | `…/tiles`                                               |
+| Convert between zoom and scale        | `…/engine`                                              |
+| Load web fonts for map labels         | `…/engine`                                              |
+| Draw labels from a vector style       | `…/arcgis`                                              |
 
 ## The entry points
 
@@ -47,8 +48,10 @@ adding your own — see [Capabilities](./capabilities.md#2-tell-the-type-system-
 
 ### `…/capability`
 
-`Capability`, `GlobeContext`, `CapabilityRule`, `defineRule`. What you import
-while writing a feature.
+`Capability`, `GlobeContext`, `CapabilityRule`, `defineRule`, and the focus
+helpers `focusRegionFor` / `createFocusRegionTracker` (see
+[Capabilities](./capabilities.md#focus-one-region-confined-capabilities)). What
+you import while writing a feature.
 
 ### `…/registry`
 
