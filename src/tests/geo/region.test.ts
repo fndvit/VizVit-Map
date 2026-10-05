@@ -106,3 +106,11 @@ describe('loadRegionShape', () => {
 		expect(fetchImpl).toHaveBeenCalledTimes(2);
 	});
 });
+
+describe('regionCenter', () => {
+	it('is the bbox centre, and centred across ±180° for a wrapping region', async () => {
+		const { regionCenter } = await import('$lib/geo');
+		expect(regionCenter(regionShapeOf(square))).toEqual({ lon: 0, lat: 0 });
+		expect(regionCenter(regionShapeOf(fiji))).toEqual({ lon: 180, lat: -15 });
+	});
+});

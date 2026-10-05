@@ -137,6 +137,55 @@ expect(provider.created.find((l) => l.id === 'heat-spots')!.removed).toBe(true);
 No SDK, no GPU, no DOM. If your capability can only be tested against a real
 map, it is probably reaching for `native()` when a port would do.
 
+## Focus: one region, confined capabilities
+
+`GlobeConfig.focus` names the one area the globe is about. The `outlines`
+capability draws its outline — one more outline, keyed by the region id, which
+replaces an authored outline with the same id rather than drawing the boundary
+twice — and every capability listed in `confine` confines itself to it: draws
+only what lies inside. A `confine` name no mounted capability answers to is
+warned about when the globe resolves its capabilities.
+
+```ts
+const config: GlobeConfig = {
+	…,
+	markers: { items },
+	focus: {
+		region: { id: 'deccan', src: '/regions/deccan.geojson' },
+		outline: { color: '#000', width: 2 }, // or false: confine without an outline
+		visible: true, // fades the outline (500 ms)
+		confine: ['markers', 'labels']
+	}
+};
+```
+
+The package's `markers` (through `LayerHandle.setRegion`) and `pins` (by
+filtering the items it projects) honour it. A host capability opts in the same
+way: its rule reads the region in `select`, so it never depends on the
+`outlines` capability that draws the focus — the rule from [What a capability cannot do](#what-a-capability-cannot-do)
+holds.
+
+```ts
+import { createFocusRegionTracker, focusRegionFor } from '@vit-foundation/map/capability';
+
+export const labelsRule = defineRule<LabelsConfig & { region: FocusRegion | null }>({
+	name: 'labels',
+	applies: (config) => config.labels != null,
+	select: (config) => ({ ...config.labels!, region: focusRegionFor(config, 'labels') }),
+	create: () => createLabelsCapability()
+});
+
+// Inside the capability: the shape, once per region id, never a stale one.
+const region = createFocusRegionTracker((shape) => layer?.setRegion(shape));
+region.set(config.region); // in setup and update
+```
+
+The region is a GeoJSON polygon; the inside test and the rule for lines and
+polygons (a feature is in when its anchor is) are `…/geo`'s. A host whose focus
+changes over time — a scrolly — passes `focus` on every step, with
+`region: null` where nothing is focused, because capabilities are resolved once,
+at view-ready.
+
 ## When a capability is SDK-bound
 
 Sometimes there is no neutral form — a renderer expression language, a SQL

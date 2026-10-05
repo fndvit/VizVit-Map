@@ -36,8 +36,11 @@ export {
 	type ProjectedPin,
 	type HoverConfig,
 	type TooltipConfig,
-	type OutlineConfig
+	type OutlineConfig,
+	type FocusConfig,
+	type FocusRegion
 } from './config.js';
+export { createFocusRegionTracker, focusRegionFor, type FocusRegionTracker } from './focus.js';
 export type {
 	DotStyle,
 	HoverInfo,

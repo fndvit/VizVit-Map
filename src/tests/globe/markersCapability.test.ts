@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createMarkersCapability } from '$lib/globe/capabilities/markersCapability';
+import { createMarkersCapability, markersRule } from '$lib/globe/capabilities/markersCapability';
+import { regionShapeOf } from '$lib/geo';
 import type { MarkersConfig } from '$lib/globe/config';
 import type { PointItem } from '$lib/map-engine/provider';
 import { makeFakeContext, type FakePointLayer, type FakeProvider } from '$lib/testing/fakeProvider';
@@ -145,5 +146,46 @@ describe('markersCapability.destroy', () => {
 
 		cap.destroy!();
 		expect(provider.created.find((l) => l.id === 'markers')!.removed).toBe(true);
+	});
+});
+
+describe('markersCapability — confined to the focus', () => {
+	/** A region holding India (lon 78) and not China (lon 104) or Kenya (lon 36). */
+	const southAsia = regionShapeOf({
+		type: 'Polygon',
+		coordinates: [
+			[
+				[60, 0],
+				[90, 0],
+				[90, 30],
+				[60, 30],
+				[60, 0]
+			]
+		]
+	});
+	const REGION = { id: 'south-asia', src: '/regions/south-asia.json' };
+	const drawnIds = (provider: FakeProvider) =>
+		(provider.layer('markers') as FakePointLayer).drawn.map((i) => i.id);
+
+	it('draws only the markers inside the region, and every marker again once released', async () => {
+		const { ctx, provider } = makeFakeContext();
+		const load = vi.fn(async () => southAsia);
+		const cap = createMarkersCapability(load);
+		await cap.setup(ctx, { ...baseConfig(), region: REGION });
+		await vi.waitFor(() => expect(drawnIds(provider)).toEqual(['india']));
+		expect(load).toHaveBeenCalledWith(REGION.src);
+
+		cap.update!(ctx, { ...baseConfig(), region: null });
+		await vi.waitFor(() => expect(drawnIds(provider)).toEqual(['india', 'china', 'kenya']));
+	});
+
+	it('takes its region from the config through the rule, only when `confine` lists it', () => {
+		const base = { basemap: { id: 'x' }, markers: baseConfig() };
+		expect(
+			markersRule.select({ ...base, focus: { region: REGION, confine: ['markers'] } } as never)
+		).toMatchObject({ region: REGION });
+		expect(markersRule.select({ ...base, focus: { region: REGION } } as never)).toMatchObject({
+			region: null
+		});
 	});
 });

@@ -9,7 +9,7 @@
  *
  * The rule set is **injectable**, which is what makes the globe layer
  * publishable: {@link DEFAULT_CAPABILITY_RULES} is the neutral set a package can
- * ship (markers, hover, pins, outlines), and a host adds its domain-bound
+ * ship (markers, hover, pins, outlines — which also draws the focus), and a host adds its domain-bound
  * capabilities — this site's explore dot tiers, hex overlay and click-to-inspect
  * — by passing its own set through {@link GlobeConfig.capabilities}
  * (`$lib/site-globe/rules`). A published `<Globe>` must not carry a rule whose
@@ -62,18 +62,39 @@ export function mapConfigToCapabilities(
 	provider: ProviderKind,
 	rules?: CapabilityRule[]
 ): ResolvedCapability[] {
-	const active = rules ?? config.capabilities ?? DEFAULT_CAPABILITY_RULES;
-	return active
-		.filter((rule) => rule.applies(config))
-		.map((rule) => {
-			const capability = rule.create();
-			if (capability.requires && capability.requires !== provider) {
-				throw new ProviderMismatchError(
-					capability.requires,
-					provider,
-					`The '${rule.name}' capability`
-				);
-			}
-			return { name: rule.name, capability, select: rule.select };
-		});
+	const active = (rules ?? config.capabilities ?? DEFAULT_CAPABILITY_RULES).filter((rule) =>
+		rule.applies(config)
+	);
+	warnUnknownConfinement(config, active);
+	return active.map((rule) => {
+		const capability = rule.create();
+		if (capability.requires && capability.requires !== provider) {
+			throw new ProviderMismatchError(
+				capability.requires,
+				provider,
+				`The '${rule.name}' capability`
+			);
+		}
+		return { name: rule.name, capability, select: rule.select };
+	});
+}
+
+/**
+ * Warns about a `focus.confine` entry that names no mounted capability — a
+ * typo (`'label'`) or a capability the config never enables. Either way that
+ * entry confines nothing, which would otherwise fail silently: the names are
+ * plain strings because a host's capabilities are its own.
+ *
+ * @param config - The globe config.
+ * @param active - The rules the config activates.
+ */
+function warnUnknownConfinement(config: GlobeConfig, active: readonly CapabilityRule[]): void {
+	const mounted = new Set(active.map((rule) => rule.name));
+	for (const name of config.focus?.confine ?? []) {
+		if (!mounted.has(name)) {
+			console.warn(
+				`focus.confine names '${name}', which no mounted capability is called — nothing is confined for it.`
+			);
+		}
+	}
 }

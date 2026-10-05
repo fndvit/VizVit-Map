@@ -17,6 +17,7 @@ export {
 	loadRegionShape,
 	polygonsOf,
 	regionBoxes,
+	regionCenter,
 	regionShapeOf,
 	type PolygonRings,
 	type Position,

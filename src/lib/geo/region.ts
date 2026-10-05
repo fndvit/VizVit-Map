@@ -170,6 +170,21 @@ export function regionBoxes(shape: RegionShape): [number, number, number, number
 	];
 }
 
+/**
+ * The centre of a region's bounding box — where a camera aims to frame it.
+ * A box across the antimeridian (`west > east`) is centred across ±180°.
+ *
+ * @param shape - The region.
+ * @returns `{ lon, lat }` in degrees, `lon` in −180–180.
+ */
+export function regionCenter(shape: RegionShape): { lon: number; lat: number } {
+	const [west, south, east, north] = shape.bbox;
+	const span = west <= east ? east - west : east + 360 - west;
+	let lon = west + span / 2;
+	if (lon > 180) lon -= 360;
+	return { lon, lat: (south + north) / 2 };
+}
+
 /** Shapes already loaded, by URL — every caller on a page shares one fetch. */
 const shapes = new Map<string, Promise<RegionShape>>();
 

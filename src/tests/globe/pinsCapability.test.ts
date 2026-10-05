@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { createPinsCapability } from '$lib/globe/capabilities/pinsCapability';
+import { createPinsCapability, pinsRule } from '$lib/globe/capabilities/pinsCapability';
+import { regionShapeOf } from '$lib/geo';
 import type { PinsConfig, ProjectedPin } from '$lib/globe/config';
 import { makeFakeContext } from '$lib/testing/fakeProvider';
 
@@ -107,5 +108,51 @@ describe('pinsCapability', () => {
 		flush();
 
 		expect(onProjected).not.toHaveBeenCalled();
+	});
+});
+
+describe('pinsCapability — confined to the focus', () => {
+	/** A region holding the pin at lon 10 and not the one at lon 50. */
+	const west = regionShapeOf({
+		type: 'Polygon',
+		coordinates: [
+			[
+				[0, 0],
+				[20, 0],
+				[20, 40],
+				[0, 40],
+				[0, 0]
+			]
+		]
+	});
+	const REGION = { id: 'west', src: '/regions/west.json' };
+	const pins = [
+		{ id: 'in', lon: 10, lat: 20 },
+		{ id: 'out', lon: 50, lat: 20 }
+	];
+
+	it('projects only the pins inside the region, and all of them once released', async () => {
+		const { ctx } = makeFakeContext();
+		const onProjected = vi.fn();
+		const cap = createPinsCapability(async () => west);
+		cap.setup(ctx, { ...config(pins, onProjected), region: REGION });
+		await vi.waitFor(() => {
+			flush();
+			expect(last(onProjected).map((p) => p.id)).toEqual(['in']);
+		});
+
+		cap.update!(ctx, { ...config(pins, onProjected), region: null });
+		flush();
+		expect(last(onProjected).map((p) => p.id)).toEqual(['in', 'out']);
+	});
+
+	it('takes its region from the config through the rule, only when `confine` lists it', () => {
+		const base = { basemap: { id: 'x' }, pins: config(pins, vi.fn()) };
+		expect(
+			pinsRule.select({ ...base, focus: { region: REGION, confine: ['pins'] } } as never)
+		).toMatchObject({ region: REGION });
+		expect(
+			pinsRule.select({ ...base, focus: { region: REGION, confine: ['markers'] } } as never)
+		).toMatchObject({ region: null });
 	});
 });
