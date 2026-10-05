@@ -5,17 +5,18 @@ version**, newest first. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-| Version                       | Released   | What it is                                                                      |
-| ----------------------------- | ---------- | ------------------------------------------------------------------------------- |
-| [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                                          |
-| [0.7.0](./0.7.0.md)           | 2026-10-05 | Regions: `…/geo`, `LayerHandle.setRegion`, `confineFeatureLayer`, `pageThrough` |
-| [0.6.0](./0.6.0.md)           | 2026-09-23 | Selection is first-class in the hover overlay: `select` and `selectionCard`     |
-| [0.5.0](./0.5.0.md)           | 2026-09-23 | Style-complete: the overlay stacks by its own CSS and a named z-ladder          |
-| [0.4.0](./0.4.0.md)           | 2026-09-22 | Label primitives: a style compiler, a vector tile overlay, fonts, tile schemes  |
-| [0.3.0](./0.3.0.md)           | 2026-09-22 | The tooltip is placed by the shared `anchor` from `ui/overlay`                  |
-| [0.2.1](./0.2.1.md)           | 2026-09-21 | A pinned camera stops re-flying on unrelated config changes                     |
-| [0.2.0](./0.2.0.md)           | 2026-09-21 | The PMTiles cell id column becomes yours to name                                |
-| [0.1.0](./0.1.0.md)           | 2026-09-18 | The first extraction: the provider seam, three adapters, `<Globe>`              |
+| Version                       | Released   | What it is                                                                              |
+| ----------------------------- | ---------- | --------------------------------------------------------------------------------------- |
+| [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                                                  |
+| [0.8.0](./0.8.0.md)           | 2026-10-05 | Focus: a region outlined once, which `markers`, `pins` and host capabilities confine to |
+| [0.7.0](./0.7.0.md)           | 2026-10-05 | Regions: `…/geo`, `LayerHandle.setRegion`, `confineFeatureLayer`, `pageThrough`         |
+| [0.6.0](./0.6.0.md)           | 2026-09-23 | Selection is first-class in the hover overlay: `select` and `selectionCard`             |
+| [0.5.0](./0.5.0.md)           | 2026-09-23 | Style-complete: the overlay stacks by its own CSS and a named z-ladder                  |
+| [0.4.0](./0.4.0.md)           | 2026-09-22 | Label primitives: a style compiler, a vector tile overlay, fonts, tile schemes          |
+| [0.3.0](./0.3.0.md)           | 2026-09-22 | The tooltip is placed by the shared `anchor` from `ui/overlay`                          |
+| [0.2.1](./0.2.1.md)           | 2026-09-21 | A pinned camera stops re-flying on unrelated config changes                             |
+| [0.2.0](./0.2.0.md)           | 2026-09-21 | The PMTiles cell id column becomes yours to name                                        |
+| [0.1.0](./0.1.0.md)           | 2026-09-18 | The first extraction: the provider seam, three adapters, `<Globe>`                      |
 
 Version numbers here describe a **package somebody installs**, so they describe
 the API rather than a deployment: MAJOR when an existing import, type or
