@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 | Version                       | Released   | What it is                                                                              |
 | ----------------------------- | ---------- | --------------------------------------------------------------------------------------- |
 | [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                                                  |
+| [0.9.0](./0.9.0.md)           | 2026-10-06 | Zoom cap: `maxZoom`, converted to a live-viewport altitude on a 3D ArcGIS globe         |
 | [0.8.0](./0.8.0.md)           | 2026-10-05 | Focus: a region outlined once, which `markers`, `pins` and host capabilities confine to |
 | [0.7.0](./0.7.0.md)           | 2026-10-05 | Regions: `…/geo`, `LayerHandle.setRegion`, `confineFeatureLayer`, `pageThrough`         |
 | [0.6.0](./0.6.0.md)           | 2026-09-23 | Selection is first-class in the hover overlay: `select` and `selectionCard`             |
