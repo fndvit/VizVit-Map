@@ -163,4 +163,18 @@ describe('createMapView', () => {
 		expect(m.lastMapViewOpts.center).toBeDefined();
 		expect(m.lastMapViewOpts.constraints).toBeDefined();
 	});
+
+	it("lets maxZoom override the constraints' maxZoom and keeps the rest", () => {
+		const m = fakeModules();
+		createMapView(m, 'gray', container, {
+			mode: '2d',
+			constraints: { minZoom: 1, maxZoom: 18, rotationEnabled: true },
+			maxZoom: 12
+		});
+		expect(m.lastMapViewOpts.constraints).toEqual({
+			minZoom: 1,
+			maxZoom: 12,
+			rotationEnabled: true
+		});
+	});
 });

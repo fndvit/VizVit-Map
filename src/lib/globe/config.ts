@@ -368,6 +368,13 @@ export interface GlobeConfig {
 	interactive?: boolean;
 	/** Lock the globe to a fixed altitude range (3D). */
 	altitudeConstraint?: { min: number; max: number };
+	/**
+	 * The deepest zoom level the globe can reach — by wheel, pinch, the zoom
+	 * buttons or a fly-to. Zooming out is unaffected. On a 3D ArcGIS globe it is
+	 * converted to a minimum camera altitude for the live viewport (see
+	 * `MapEngineOptions.maxZoom`). Read once, when the view is built.
+	 */
+	maxZoom?: number;
 	/** SceneView render quality (3D). Defaults to `'medium'`; decorative globes pass `'low'` to cut GPU memory. */
 	qualityProfile?: QualityProfile;
 	/**

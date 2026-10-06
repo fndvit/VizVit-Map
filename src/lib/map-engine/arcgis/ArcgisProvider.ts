@@ -43,6 +43,7 @@ import { applyBasemap, type BasemapCache } from './basemap.js';
 import { toRgba } from './colors.js';
 import { createGeoJsonLayer, createPointLayer, type LayerCtors } from './layers.js';
 import { ARCGIS_LOADERS, type ArcgisLoaders } from './loaders.js';
+import { capSceneZoom } from './zoomCap.js';
 
 /** The ArcGIS view properties the event port maps straight onto `view.watch`. */
 type WatchedFlag = 'stationary' | 'interacting' | 'updating';
@@ -83,6 +84,8 @@ export class ArcgisProvider implements MapProvider {
 	private basemapGeneration = 0;
 	/** Live layer handles, in creation order. */
 	private readonly liveLayers: LayerHandle[] = [];
+	/** The `maxZoom` cap's viewport watch, while one is set (see {@link capZoom}). */
+	private zoomCap: Handle | null = null;
 
 	/**
 	 * Pointer/camera/flag subscriptions. Built in the constructor because its two
@@ -150,7 +153,13 @@ export class ArcgisProvider implements MapProvider {
 					const next = this.view.camera.clone();
 					next.position.longitude = target.longitude ?? current?.longitude ?? 0;
 					next.position.latitude = target.latitude ?? current?.latitude ?? 0;
-					next.position.z = target.z;
+					// `goTo` does not hold an explicit Camera to the altitude constraint
+					// (wheel, pinch and level-based moves are held to it), so a `maxZoom`
+					// cap clamps the target here. Only the cap does: a host's own
+					// `altitudeConstraint` keeps letting altitude fly-tos through.
+					next.position.z = this.zoomCap
+						? Math.max(target.z, this.view.constraints.altitude.min)
+						: target.z;
 					next.tilt = target.tilt ?? current?.tilt ?? 0;
 					next.heading = target.heading ?? current?.heading ?? 0;
 					await this.view.goTo(
@@ -421,9 +430,27 @@ export class ArcgisProvider implements MapProvider {
 		return out;
 	};
 
+	// ── zoom cap ──────────────────────────────────────────────────────
+
+	/**
+	 * Stops a 3D view from zooming in past `maxZoom` by any means: the altitude
+	 * constraint holds wheel, pinch and level-based moves, and {@link camera}'s
+	 * `flyTo` clamps altitude targets, which `goTo` lets through. Replaces any
+	 * earlier cap.
+	 *
+	 * @param maxZoom - The deepest zoom level allowed (the levels `view.zoom` reports).
+	 * @param floor - An altitude the cap never goes under (an `altitudeConstraint.min`).
+	 */
+	capZoom(maxZoom: number, floor?: number): void {
+		this.zoomCap?.remove();
+		this.zoomCap = capSceneZoom(this.view, maxZoom, floor);
+	}
+
 	// ── lifecycle ─────────────────────────────────────────────────────
 
 	destroy(): void {
+		this.zoomCap?.remove();
+		this.zoomCap = null;
 		for (const handle of [...this.liveLayers]) handle.remove();
 		this.liveLayers.length = 0;
 		this.projectionPoint = null;

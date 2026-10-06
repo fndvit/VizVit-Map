@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- fakes stand in for ArcGIS objects */
 
+import { sceneDistanceForScale } from '$lib/map-engine/arcgis/zoomCap';
+import { scaleForZoom } from '$lib/map-engine/scale';
 import { ArcgisProvider } from '$lib/map-engine/arcgis/ArcgisProvider';
 import { ProviderMismatchError, zoomForScale } from '$lib/map-engine';
 import { regionShapeOf } from '$lib/geo';
@@ -191,6 +193,27 @@ describe('ArcgisProvider — camera port', () => {
 		const { provider, view } = makeProvider();
 		await provider.camera.flyTo({ longitude: 0, latitude: 0, scale: 100_000 });
 		expect((view.goTo as any).mock.calls[0][0].zoom).toBeCloseTo(zoomForScale(100_000, 0), 9);
+	});
+
+	it('clamps an altitude target to the maxZoom cap, which goTo would let through', async () => {
+		const { provider, view } = makeProvider();
+		view.camera.fov = 55;
+		view.constraints = { altitude: { min: -200_000, max: 25_512_548 } };
+		provider.capZoom(12);
+		const floor = view.constraints.altitude.min;
+		expect(floor).toBeCloseTo(sceneDistanceForScale(scaleForZoom(12), 55, 800, 600), 6);
+
+		await provider.camera.flyTo({ longitude: 1, latitude: 2, z: 500 });
+		expect((view.goTo as any).mock.calls[0][0].position.z).toBe(floor);
+		await provider.camera.flyTo({ longitude: 1, latitude: 2, z: 5_000_000 });
+		expect((view.goTo as any).mock.calls[1][0].position.z).toBe(5_000_000);
+	});
+
+	it('leaves altitude targets alone without a cap, even under an altitudeConstraint', async () => {
+		const { provider, view } = makeProvider();
+		view.constraints = { altitude: { min: 1_000_000, max: 1_000_000 } };
+		await provider.camera.flyTo({ longitude: 1, latitude: 2, z: 500 });
+		expect((view.goTo as any).mock.calls[0][0].position.z).toBe(500);
 	});
 
 	it('resolves rather than rejects when a newer move aborts this one', async () => {

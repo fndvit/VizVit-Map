@@ -27,6 +27,7 @@ export {
 	NEUTRAL_MAP_DEFAULTS,
 	type BuiltView
 } from './viewFactory.js';
+export { capSceneZoom, sceneDistanceForScale } from './zoomCap.js';
 export { applyBasemap, initialBasemap, needsDeferredApply, type BasemapCache } from './basemap.js';
 // Label styling primitives: a style document's symbol layers → ArcGIS TextSymbols.
 export {
@@ -128,6 +129,13 @@ export async function createArcgisProvider(
 	// memory-constrained devices. Applied after the view is ready because
 	// `qualitySettings` only exists then.
 	provider.scene.setQuality({ maxPixelRatio: options.maxPixelRatio });
+
+	// A 3D zoom cap is an altitude that depends on the viewport, so it can only be
+	// derived from the ready view (the provider re-derives it on every resize).
+	// 2D took `maxZoom` into its constraints at build time.
+	if (options.mode === '3d' && options.maxZoom != null) {
+		provider.capZoom(options.maxZoom, options.altitudeConstraint?.min);
+	}
 
 	return provider;
 }
