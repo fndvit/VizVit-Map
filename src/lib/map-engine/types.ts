@@ -131,6 +131,17 @@ export interface MapEngineOptions {
 	/** Lock the globe to a fixed altitude range (3D mode), e.g. the homepage globe. */
 	altitudeConstraint?: { min: number; max: number };
 	/**
+	 * The deepest zoom level the user (or a fly-to) can reach, in the levels
+	 * `camera.flyTo({ zoom })` and `camera.zoomBy` speak (the provider's own:
+	 * ArcGIS `view.zoom`, MapLibre `getZoom()`). Zooming out is unaffected. On an ArcGIS
+	 * `SceneView` it becomes the altitude constraint's `min`, derived from the
+	 * live viewport and re-derived on resize (one zoom level sits at a different
+	 * altitude on a phone than on a desktop); on a 2D `MapView` it overrides
+	 * `constraints.maxZoom`; on MapLibre it is the map's own `maxZoom`. Read
+	 * once, when the view is built. Default: no cap beyond the provider's own.
+	 */
+	maxZoom?: number;
+	/**
 	 * Rendering quality (3D mode). Defaults to `'medium'`. Decorative globes pass
 	 * `'low'` to cut GPU memory; the explore tool tunes it at runtime.
 	 */

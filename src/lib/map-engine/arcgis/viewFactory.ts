@@ -158,7 +158,10 @@ export function createMapView(
 		map,
 		center: opts.center ?? NEUTRAL_MAP_DEFAULTS.center,
 		zoom: opts.zoom ?? NEUTRAL_MAP_DEFAULTS.zoom,
-		constraints: opts.constraints ?? NEUTRAL_MAP_DEFAULTS.constraints,
+		constraints: {
+			...(opts.constraints ?? NEUTRAL_MAP_DEFAULTS.constraints),
+			...(opts.maxZoom != null ? { maxZoom: opts.maxZoom } : {})
+		},
 		ui: { components: opts.uiComponents ?? ['zoom'] }
 	});
 

@@ -195,6 +195,7 @@
 			center={config.center}
 			zoom={config.zoom}
 			altitudeConstraint={config.altitudeConstraint}
+			maxZoom={config.maxZoom}
 			qualityProfile={config.qualityProfile}
 			maxPixelRatio={config.maxPixelRatio}
 			{flyToOptions}

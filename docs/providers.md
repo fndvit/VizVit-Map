@@ -103,6 +103,27 @@ is why they are arguments rather than constants. Read a style's `minzoom` with
 the wrong scheme and every band lands a level out — content appears and vanishes
 one level early, which looks like a data problem and is not.
 
+### Capping zoom
+
+`maxZoom` (on `GlobeConfig` and `MapEngineOptions`) stops every way of zooming
+in — wheel, pinch, the zoom buttons, a fly-to — at one level, in the levels
+`camera.flyTo({ zoom })` and `camera.zoomBy` speak. A 2D `MapView` and MapLibre
+take it as their own `maxZoom`. A 3D `SceneView` has no zoom constraint, only an
+altitude one, and the altitude a zoom level sits at depends on the viewport: the
+view spreads its field of view over the viewport **diagonal**, so the camera
+distance for a scale is
+
+```
+distance = scale × (0.0254 / 96) × diagonalPx / (2 · tan(fov / 2))
+```
+
+Zoom 12 is about 29 km up on a phone and 54 km on a 1280 px desktop. The
+adapter derives the altitude `min` from the live view and re-derives it on every
+resize (`capSceneZoom`), so a fixed altitude never has to be guessed. `goTo`
+does not hold an explicit camera to that constraint, so `camera.flyTo` clamps
+an altitude target to the cap itself. The cap bounds altitude, so a tilted
+camera stops a little short of `maxZoom`, never past it.
+
 ## Basemaps: your app owns the ids
 
 The engine knows no basemap ids. You give it a catalog:

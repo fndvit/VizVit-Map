@@ -55,6 +55,9 @@ export async function createMaplibreProvider(
 		pitch: camera?.tilt ?? 0,
 		bearing: camera?.heading ?? 0,
 		interactive: options.interactive !== false,
+		// MapLibre speaks the same zoom levels the provider reports, so the cap
+		// passes straight through (its own default is 22).
+		...(options.maxZoom != null ? { maxZoom: options.maxZoom } : {}),
 		attributionControl: false
 	});
 

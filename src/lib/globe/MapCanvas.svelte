@@ -26,6 +26,7 @@
 	@prop {string} [background='transparent'] - Scene background ('transparent' or hex) (3D).
 	@prop {string} [groundColor] - Ground (sphere) surface color as hex (3D), fully independent of background (never inferred from it). Set an opaque light color so draped portal basemaps don't show dark land; defaults to a see-through surface.
 	@prop {{min:number,max:number}} [altitudeConstraint] - Lock the globe to a fixed altitude range (3D).
+	@prop {number} [maxZoom] - Deepest zoom level reachable by any navigation; zooming out is unaffected. 3D ArcGIS converts it to a viewport-dependent minimum altitude. Read once, at build.
 	@prop {QualityProfile} [qualityProfile='medium'] - SceneView render quality (3D). Pass 'low' for decorative globes to cut GPU memory.
 	@prop {number} [maxPixelRatio] - Cap the SceneView render pixel ratio (3D). Pass a value below 1 (e.g. 0.6) on memory-constrained devices to render sub-natively and shrink the WebGL framebuffer.
 	@prop {MapViewConstraints} [constraints] - 2D navigation constraints.
@@ -67,6 +68,7 @@
 		background = 'transparent',
 		groundColor,
 		altitudeConstraint,
+		maxZoom,
 		qualityProfile,
 		maxPixelRatio,
 		constraints,
@@ -93,6 +95,7 @@
 		background?: string;
 		groundColor?: string;
 		altitudeConstraint?: { min: number; max: number };
+		maxZoom?: number;
 		qualityProfile?: QualityProfile;
 		maxPixelRatio?: number;
 		constraints?: MapViewConstraints;
@@ -125,6 +128,7 @@
 			background,
 			groundColor,
 			altitudeConstraint,
+			maxZoom,
 			qualityProfile,
 			maxPixelRatio,
 			constraints,
