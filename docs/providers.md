@@ -148,6 +148,16 @@ view's internal input manager. If a later SDK moves it, the adapter warns once
 and the view keeps its own touch navigation. MapLibre turns off touch rotation
 and touch pitch, its own switches.
 
+`'map'` also keeps the view from holding on to a finger that has lifted. A
+`SceneView` tracks fingers through pointer listeners on its own surface, and
+iOS Safari now and then delivers a `pointerup` elsewhere or not at all. The
+view then keeps a ghost finger, and every later one-finger drag is a pinch
+against it, so the globe zooms instead of panning. `sweepStaleTouches` watches
+the whole window and replays the missing ending to the surface as a
+`pointercancel`: when a touch lifts off the surface, and, for any finger the
+browser forgot, when the next touch sequence starts (a primary touch
+`pointerdown`, so no other finger is down).
+
 ## Basemaps: your app owns the ids
 
 The engine knows no basemap ids. You give it a catalog:
