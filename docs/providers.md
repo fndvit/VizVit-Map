@@ -124,6 +124,30 @@ does not hold an explicit camera to that constraint, so `camera.flyTo` clamps
 an altitude target to the cap itself. The cap bounds altitude, so a tilted
 camera stops a little short of `maxZoom`, never past it.
 
+### Touch navigation
+
+`touchNavigation: 'map'` (on `GlobeConfig` and `MapEngineOptions`) gives touch
+the phone-map grammar: one finger pans, a pinch only zooms, the camera stays
+north-up at its tilt, and a pan stops where the finger lifts. Mouse, wheel and
+keyboard navigation keep the provider's own rig. The default, `'free'`, changes
+nothing.
+
+A `SceneView`'s own touch rig rotates on every pinch (by the angle between the
+fingers), tilts on a two-finger vertical drag and flings on momentum. Pinching
+toward the fingers also leans the camera, about 5° per pinch at country scale.
+Small accidental twists and leans add up, so later in a session the same drag
+moves the globe a different way. The ArcGIS adapter keeps the SDK's pan and
+pinch-zoom and, for touch pointers only, pins the pinch angle, stops the tilt
+gesture and turns momentum off. When the last finger lifts, the camera eases
+back to north and to the tilt the gesture started from (`mapLikeTouch`).
+Capping the `TiltConstraint` does not work instead: in `manual` mode a 5.1
+`SceneView` settles well below the cap.
+
+The SDK has no public switch for any of this, so the handler goes into the
+view's internal input manager. If a later SDK moves it, the adapter warns once
+and the view keeps its own touch navigation. MapLibre turns off touch rotation
+and touch pitch, its own switches.
+
 ## Basemaps: your app owns the ids
 
 The engine knows no basemap ids. You give it a catalog:

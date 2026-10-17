@@ -72,5 +72,11 @@ export async function createMaplibreProvider(
 	provider.applyProjection();
 	if (options.background) provider.scene.setBackground(options.background);
 	provider.scene.setQuality({ maxPixelRatio: options.maxPixelRatio });
+	// The phone-map touch grammar: a pinch only zooms and two fingers never pitch.
+	// (MapLibre already keeps a one-finger pan from rotating.)
+	if (options.touchNavigation === 'map') {
+		map.touchZoomRotate?.disableRotation?.();
+		map.touchPitch?.disable?.();
+	}
 	return provider;
 }

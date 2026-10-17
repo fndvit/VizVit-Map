@@ -68,6 +68,7 @@ import type {
 	FlyToOptions,
 	ViewMode,
 	QualityProfile,
+	TouchNavigation,
 	BasemapCatalog,
 	ProviderKind
 } from '$lib/map-engine/index.js';
@@ -375,6 +376,14 @@ export interface GlobeConfig {
 	 * `MapEngineOptions.maxZoom`). Read once, when the view is built.
 	 */
 	maxZoom?: number;
+	/**
+	 * How touch gestures move the camera: `'free'` (default) is the provider's
+	 * own 3D touch navigation; `'map'` is the phone-map grammar — one finger
+	 * pans, a pinch only zooms, north-up, no fling. Mouse navigation is
+	 * unaffected (see `MapEngineOptions.touchNavigation`). Read once, when the
+	 * view is built.
+	 */
+	touchNavigation?: TouchNavigation;
 	/** SceneView render quality (3D). Defaults to `'medium'`; decorative globes pass `'low'` to cut GPU memory. */
 	qualityProfile?: QualityProfile;
 	/**

@@ -13,6 +13,7 @@ import { loadArcgisCore } from './modules.js';
 import { createMapView, createSceneView } from './viewFactory.js';
 import { ARCGIS_LOADERS, type ArcgisLoaders } from './loaders.js';
 import { initialBasemap } from './basemap.js';
+import { loadInputHandler } from './touchNavigation.js';
 import type { LayerCtors } from './layers.js';
 
 export { ArcgisProvider } from './ArcgisProvider.js';
@@ -28,6 +29,7 @@ export {
 	type BuiltView
 } from './viewFactory.js';
 export { capSceneZoom, sceneDistanceForScale } from './zoomCap.js';
+export { mapLikeTouch, loadInputHandler, isNorth } from './touchNavigation.js';
 export { applyBasemap, initialBasemap, needsDeferredApply, type BasemapCache } from './basemap.js';
 // Label styling primitives: a style document's symbol layers → ArcGIS TextSymbols.
 export {
@@ -135,6 +137,12 @@ export async function createArcgisProvider(
 	// 2D took `maxZoom` into its constraints at build time.
 	if (options.mode === '3d' && options.maxZoom != null) {
 		provider.capZoom(options.maxZoom, options.altitudeConstraint?.min);
+	}
+
+	// Pan + pinch-zoom only on touch, north-up, no fling. Needs the view's input
+	// manager, which only exists once the view is ready.
+	if (options.mode === '3d' && options.touchNavigation === 'map' && options.interactive !== false) {
+		provider.mapLikeTouch(await loadInputHandler());
 	}
 
 	return provider;

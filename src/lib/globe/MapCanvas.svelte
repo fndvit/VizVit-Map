@@ -27,6 +27,7 @@
 	@prop {string} [groundColor] - Ground (sphere) surface color as hex (3D), fully independent of background (never inferred from it). Set an opaque light color so draped portal basemaps don't show dark land; defaults to a see-through surface.
 	@prop {{min:number,max:number}} [altitudeConstraint] - Lock the globe to a fixed altitude range (3D).
 	@prop {number} [maxZoom] - Deepest zoom level reachable by any navigation; zooming out is unaffected. 3D ArcGIS converts it to a viewport-dependent minimum altitude. Read once, at build.
+	@prop {TouchNavigation} [touchNavigation='free'] - How touch gestures move the camera: 'free' is the provider's own 3D touch navigation; 'map' pans and pinch-zooms only, north-up, with no fling. Mouse navigation is unaffected. Read once, at build.
 	@prop {QualityProfile} [qualityProfile='medium'] - SceneView render quality (3D). Pass 'low' for decorative globes to cut GPU memory.
 	@prop {number} [maxPixelRatio] - Cap the SceneView render pixel ratio (3D). Pass a value below 1 (e.g. 0.6) on memory-constrained devices to render sub-natively and shrink the WebGL framebuffer.
 	@prop {MapViewConstraints} [constraints] - 2D navigation constraints.
@@ -50,6 +51,7 @@
 		ProviderKind,
 		QualityProfile,
 		SceneCamera,
+		TouchNavigation,
 		ViewMode
 	} from '$lib/map-engine/index.js';
 
@@ -69,6 +71,7 @@
 		groundColor,
 		altitudeConstraint,
 		maxZoom,
+		touchNavigation,
 		qualityProfile,
 		maxPixelRatio,
 		constraints,
@@ -96,6 +99,7 @@
 		groundColor?: string;
 		altitudeConstraint?: { min: number; max: number };
 		maxZoom?: number;
+		touchNavigation?: TouchNavigation;
 		qualityProfile?: QualityProfile;
 		maxPixelRatio?: number;
 		constraints?: MapViewConstraints;
@@ -129,6 +133,7 @@
 			groundColor,
 			altitudeConstraint,
 			maxZoom,
+			touchNavigation,
 			qualityProfile,
 			maxPixelRatio,
 			constraints,
