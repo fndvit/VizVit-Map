@@ -196,6 +196,7 @@
 			zoom={config.zoom}
 			altitudeConstraint={config.altitudeConstraint}
 			maxZoom={config.maxZoom}
+			touchNavigation={config.touchNavigation}
 			qualityProfile={config.qualityProfile}
 			maxPixelRatio={config.maxPixelRatio}
 			{flyToOptions}

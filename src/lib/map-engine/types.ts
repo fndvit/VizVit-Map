@@ -21,6 +21,13 @@ export type ViewMode = '3d' | '2d';
  */
 export type QualityProfile = 'low' | 'medium' | 'high';
 
+/**
+ * How touch gestures move the camera (see {@link MapEngineOptions.touchNavigation}).
+ * `'free'` is the provider's own touch navigation; `'map'` is the phone-map
+ * grammar — pan and pinch-zoom only, north-up, no fling.
+ */
+export type TouchNavigation = 'free' | 'map';
+
 /** Full 3D camera state (position + orientation) for a SceneView globe. */
 export interface SceneCamera {
 	/** Camera longitude in degrees. */
@@ -141,6 +148,18 @@ export interface MapEngineOptions {
 	 * once, when the view is built. Default: no cap beyond the provider's own.
 	 */
 	maxZoom?: number;
+	/**
+	 * How touch gestures move the camera. `'free'` (the default) is the
+	 * provider's own touch navigation — on an ArcGIS `SceneView` a pinch also
+	 * rotates, a two-finger vertical drag tilts and a drag flings on with
+	 * momentum, so small accidental twists and tilts add up over a session.
+	 * `'map'` is the phone-map grammar (Google Maps): one finger pans, a pinch
+	 * only zooms, the camera stays north-up at its tilt, and a pan stops where the
+	 * finger lifts. Mouse, wheel and keyboard navigation are unaffected. On
+	 * MapLibre `'map'` turns off touch rotation and touch pitch. Read once, when
+	 * the view is built.
+	 */
+	touchNavigation?: TouchNavigation;
 	/**
 	 * Rendering quality (3D mode). Defaults to `'medium'`. Decorative globes pass
 	 * `'low'` to cut GPU memory; the explore tool tunes it at runtime.

@@ -44,6 +44,7 @@ import { toRgba } from './colors.js';
 import { createGeoJsonLayer, createPointLayer, type LayerCtors } from './layers.js';
 import { ARCGIS_LOADERS, type ArcgisLoaders } from './loaders.js';
 import { capSceneZoom } from './zoomCap.js';
+import { mapLikeTouch } from './touchNavigation.js';
 
 /** The ArcGIS view properties the event port maps straight onto `view.watch`. */
 type WatchedFlag = 'stationary' | 'interacting' | 'updating';
@@ -86,6 +87,8 @@ export class ArcgisProvider implements MapProvider {
 	private readonly liveLayers: LayerHandle[] = [];
 	/** The `maxZoom` cap's viewport watch, while one is set (see {@link capZoom}). */
 	private zoomCap: Handle | null = null;
+	/** The phone-map touch handler, while one is installed (see {@link mapLikeTouch}). */
+	private touchNav: Handle | null = null;
 
 	/**
 	 * Pointer/camera/flag subscriptions. Built in the constructor because its two
@@ -446,11 +449,29 @@ export class ArcgisProvider implements MapProvider {
 		this.zoomCap = capSceneZoom(this.view, maxZoom, floor);
 	}
 
+	// ── touch navigation ──────────────────────────────────────────────
+
+	/**
+	 * Gives a 3D view the phone-map touch grammar (`touchNavigation: 'map'`):
+	 * one finger pans, a pinch only zooms, the camera stays north-up, and a pan
+	 * stops where the finger lifts. Mouse navigation is unaffected. Replaces any
+	 * earlier one.
+	 *
+	 * @param InputHandler - The SDK's input-handler base class
+	 *   (`loadInputHandler()` in `./touchNavigation`).
+	 */
+	mapLikeTouch(InputHandler: any): void {
+		this.touchNav?.remove();
+		this.touchNav = mapLikeTouch(this.view, InputHandler);
+	}
+
 	// ── lifecycle ─────────────────────────────────────────────────────
 
 	destroy(): void {
 		this.zoomCap?.remove();
 		this.zoomCap = null;
+		this.touchNav?.remove();
+		this.touchNav = null;
 		for (const handle of [...this.liveLayers]) handle.remove();
 		this.liveLayers.length = 0;
 		this.projectionPoint = null;
