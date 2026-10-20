@@ -134,6 +134,36 @@ describe('HoverTooltipOverlay.select', () => {
 		expect(selectionNode().dataset.key).toBe('');
 	});
 
+	it('restyle redraws the selected dot in place at its new style — same node, no leaving trail', () => {
+		handle().select(cell('a'));
+		flushSync();
+		const dot = pinnedDot();
+		expect(dot!.style.width).toBe('12px');
+		computeStyle.mockImplementationOnce(() => ({ ...style, size: 20 }) as DotStyle);
+		handle().restyle();
+		flushSync();
+		expect(pinnedDot()).toBe(dot);
+		expect(dot!.style.width).toBe('20px');
+		expect(target.querySelector('.hex-hover-dot-leave')).toBeNull();
+	});
+
+	it('restyle clears a selection whose cell no longer draws a dot', () => {
+		handle().select(cell('a'));
+		flushSync();
+		computeStyle.mockImplementationOnce(() => hiddenStyle);
+		handle().restyle();
+		flushSync();
+		expect(pinnedDot()).toBeNull();
+		expect(selectionNode().dataset.key).toBe('');
+	});
+
+	it('restyle with nothing selected is a no-op', () => {
+		handle().restyle();
+		flushSync();
+		expect(computeStyle).not.toHaveBeenCalled();
+		expect(handle().hasOverlays()).toBe(false);
+	});
+
 	it('carries noData beside the meaning', () => {
 		handle().select(cell('land', 10, 10, true));
 		flushSync();
