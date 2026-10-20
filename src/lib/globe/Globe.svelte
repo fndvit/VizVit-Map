@@ -83,6 +83,8 @@
 	let containerW = $state(0);
 	let containerH = $state(0);
 	let reprojectHandle: { remove(): void } | null = null;
+	/** The camera-settle watcher that restyles the selected dot. */
+	let restyleHandle: { remove(): void } | null = null;
 
 	async function handleReady(engine: MapEngine) {
 		ctx = buildGlobeContext(engine);
@@ -128,6 +130,13 @@
 				if (!overlay?.hasOverlays()) return;
 				overlay.reproject((lat, lng) => ctx!.provider.screen.toScreen({ lng, lat }));
 			});
+			// A host's dots can change look without any hover or selection change
+			// (a size that follows the camera scale is rebaked once the camera
+			// settles) — restyle the pinned dot at the same moment so it keeps
+			// matching the dot under it.
+			restyleHandle = ctx.provider.events.on('stationary', (isStationary) => {
+				if (isStationary) overlay?.restyle();
+			});
 			config.tooltip.onReady?.(overlay!);
 		}
 
@@ -161,6 +170,8 @@
 	onDestroy(() => {
 		reprojectHandle?.remove();
 		reprojectHandle = null;
+		restyleHandle?.remove();
+		restyleHandle = null;
 		for (const rc of caps) rc.capability.destroy?.();
 		caps = [];
 		ctx = null;

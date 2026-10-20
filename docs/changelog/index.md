@@ -8,6 +8,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 | Version                       | Released   | What it is                                                                              |
 | ----------------------------- | ---------- | --------------------------------------------------------------------------------------- |
 | [Unreleased](./unreleased.md) | —          | On `main`, not yet in a tagged version                                                  |
+| [0.11.0](./0.11.0.md)         | 2026-10-20 | The selected dot follows the map: `restyle()` on camera settle                          |
 | [0.10.1](./0.10.1.md)         | 2026-10-17 | No ghost fingers: a one-finger drag pans again after a while on iOS Safari              |
 | [0.10.0](./0.10.0.md)         | 2026-10-17 | Touch navigation: `touchNavigation: 'map'`, pan and pinch-zoom only, north-up           |
 | [0.9.0](./0.9.0.md)           | 2026-10-06 | Zoom cap: `maxZoom`, converted to a live-viewport altitude on a 3D ArcGIS globe         |

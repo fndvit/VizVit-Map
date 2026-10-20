@@ -146,6 +146,13 @@ export interface HoverOverlayHandle {
 	 * hover dot, not the selection. A cell that draws no dot clears it.
 	 */
 	select(result: HoverResult | null): void;
+	/**
+	 * Restyle the selected dot through `computeStyle` again, in place — for map
+	 * dots whose look changes while the selection does not (a size that follows
+	 * the camera scale). The globe calls it when the camera settles. A cell that
+	 * no longer draws a dot clears the selection; a no-op with none selected.
+	 */
+	restyle(): void;
 	/** Reproject every overlay's screen position on camera move. */
 	reproject(toScreen: ToScreen): void;
 	/** Whether any overlay is currently on screen. */

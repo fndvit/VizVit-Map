@@ -394,6 +394,39 @@
 	}
 
 	/**
+	 * Re-runs the injected `computeStyle` for the selected cell and redraws its
+	 * pinned dot in place (no pop, no leaving trail) — for a host whose map dots
+	 * change look without the selection changing, e.g. a dot size that follows
+	 * the camera scale. {@link select}'s rule holds: a cell that no longer draws
+	 * a dot clears the selection. Called by the globe when the camera settles; a
+	 * no-op while nothing is selected.
+	 */
+	export function restyle() {
+		if (!selected) return;
+		const dotStyle = computeStyle({
+			resolution: selected.resolution,
+			attributes: selected.attributes,
+			noData: selected.noData,
+			dotScreenX: selected.dotScreenX ?? 0,
+			dotScreenY: selected.dotScreenY ?? 0,
+			dotLat: selected.dotLat ?? 0,
+			dotLng: selected.dotLng ?? 0
+		});
+		if (dotStyle.hidden) {
+			select(null);
+			return;
+		}
+		selected = {
+			...selected,
+			dotColor: dotStyle.color,
+			dotOpacity: dotStyle.opacity,
+			dotSize: dotStyle.size,
+			dotOutlineColor: dotStyle.outlineColor,
+			dotOutlineWidth: dotStyle.outlineWidth
+		};
+	}
+
+	/**
 	 * Reprojects every overlay's screen position from its geo coords — called by
 	 * the globe's camera watcher on camera move; the selected dot included.
 	 */
