@@ -27,6 +27,9 @@
  * - **No fling.** Momentum is switched off for a touch drag as it starts (the
  *   SDK reads the flag once, when a drag begins) and left as the view had it
  *   for every mouse drag.
+ * - **No ghost fingers.** A touch whose ending never reached the view would
+ *   turn every later one-finger pan into a pinch-zoom; `sweepStaleTouches`
+ *   replays the missing ending (see `./staleTouches`).
  * - **North-up.** A long one-finger pan on the sphere can still turn the
  *   heading a little. When the last finger lifts, the camera eases back to
  *   north.
@@ -41,6 +44,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- ArcGIS internals have no static types */
 
 import type { Handle } from '../provider.js';
+import { sweepStaleTouches } from './staleTouches.js';
 
 /** Name of the handler group installed into the view's input manager. */
 const GROUP = 'vit-touch-navigation';
@@ -92,13 +96,16 @@ export function isNorth(heading: number): boolean {
  * @returns A handle that restores the view's own touch navigation.
  */
 export function mapLikeTouch(view: any, InputHandler: any): Handle {
+	// Plain DOM, so it holds even when the input manager below is out of reach.
+	const sweep: Handle = view.surface ? sweepStaleTouches(view.surface) : { remove() {} };
+
 	const manager = view.inputManager?._inputManager;
 	if (typeof manager?.installHandlers !== 'function' || typeof InputHandler !== 'function') {
 		console.warn(
 			'[map] touchNavigation "map": this ArcGIS version has no reachable input manager; ' +
 				'touch keeps the SceneView defaults.'
 		);
-		return { remove() {} };
+		return sweep;
 	}
 
 	// The view's own momentum setting, restored for every non-touch drag.
@@ -150,6 +157,7 @@ export function mapLikeTouch(view: any, InputHandler: any): Handle {
 
 	return {
 		remove() {
+			sweep.remove();
 			if (manager.hasHandlers?.(GROUP)) manager.uninstallHandlers(GROUP);
 			view.navigation.momentumEnabled = momentum;
 		}

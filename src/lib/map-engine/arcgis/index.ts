@@ -30,6 +30,7 @@ export {
 } from './viewFactory.js';
 export { capSceneZoom, sceneDistanceForScale } from './zoomCap.js';
 export { mapLikeTouch, loadInputHandler, isNorth } from './touchNavigation.js';
+export { sweepStaleTouches } from './staleTouches.js';
 export { applyBasemap, initialBasemap, needsDeferredApply, type BasemapCache } from './basemap.js';
 // Label styling primitives: a style document's symbol layers → ArcGIS TextSymbols.
 export {
